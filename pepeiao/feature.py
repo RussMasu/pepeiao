@@ -1,4 +1,3 @@
-
 import argparse
 import logging
 from pathlib import Path
@@ -50,16 +49,13 @@ class Spectrogram(Feature):
             self.selections_to_labels(selections)
         _LOGGER.info('Spectrogram finished initialization.')
 
-
     def data_windows(self):
         """Generate the sequence of data windows."""
-        print("generate data windows") #TODO
         for idx in range(0, self._data.shape[1], self.stride):
             yield self._get_window(idx)
 
     def label_windows(self):
         """Generate the sequence of labels."""
-        print("labeling data windows") #TODO
         for idx in range(0, self._data.shape[1], self.stride):
             yield self._get_label(idx)
 
@@ -71,17 +67,17 @@ class Spectrogram(Feature):
             yield (self._get_window(idx), self._get_label(idx))
 
     def _get_window(self, index):
-        return self._data[:, index:(index+self.width)]
+        return self._data[:, index:(index + self.width)]
 
     def _get_label(self, index, percentile=75):
-        return np.percentile(self.labels[index:(index+self.width)], percentile)
+        return np.percentile(self.labels[index:(index + self.width)], percentile)
 
     def read_wav(self, filename):
         """Read audio from file and compute spectrogram."""
         _LOGGER.info('Reading %s.', filename)
-		
+
         samples, samp_rate = librosa.load(filename, sr=None)
-		
+
         if samp_rate != _SAMP_RATE:
             _LOGGER.warning('Resampling from %s to %s Hz.', samp_rate, _SAMP_RATE)
             samples = librosa.core.resample(samples, samp_rate, _SAMP_RATE)
@@ -95,7 +91,6 @@ class Spectrogram(Feature):
         self._data = librosa.stft(samples).real
         self.times = librosa.frames_to_time(range(self._data.shape[1]), sr=self.samp_rate)
 
-
     def set_windowing(self, width, stride):
         """Setup windowing process (argument values in seconds)."""
         self.width = librosa.time_to_frames(width, self.samp_rate)
@@ -106,7 +101,6 @@ class Spectrogram(Feature):
     def selections_to_labels(self, selections):
         """Set the labels from a list of selections."""
         self.intervals = util.selections_to_intervals(selections)
-        print(self.intervals)
 
     @property
     def intervals(self):
@@ -133,7 +127,6 @@ class Spectrogram(Feature):
                 else:
                     idx += 1
         _LOGGER.info('Constructed %d intervals from labels.', len(intervals))
-        print(str(len(intervals)) + "generated from labels")
         return intervals
 
     @intervals.setter
@@ -143,7 +136,7 @@ class Spectrogram(Feature):
 
     @property
     def time_intervals(self):
-        intervals = [(self.times[start], self.times[end]) for start,end in self.intervals]
+        intervals = [(self.times[start], self.times[end]) for start, end in self.intervals]
         return intervals
 
     def save(self, filename):
@@ -155,18 +148,18 @@ class Spectrogram(Feature):
         self.width = model.layers[0].input_shape[2]
         self.stride = self.width // 4
         _LOGGER.info('Reset windowing to match model.')
-        
+
     def predict(self, model, roc=None):
         """Predict the label vector using a fitted keras model."""
         self.set_windowing_from_model(model)
-        windows = np.stack([x[47:465,] for x in self.data_windows() if x.shape[1] == self.width])
+        windows = np.stack([x[47:465, ] for x in self.data_windows() if x.shape[1] == self.width])
         window_labels = model.predict(windows)
         _LOGGER.info('found {} windows with birds'.format(
-            sum(1 for x in window_labels if x>_LABEL_THRESHOLD)))
+            sum(1 for x in window_labels if x > _LABEL_THRESHOLD)))
         new_labels = np.zeros_like(self.times)
         count = np.zeros_like(self.times)
         for idx, label in enumerate(window_labels):
-            start, end = idx*self.stride, idx*self.stride+ self.width
+            start, end = idx * self.stride, idx * self.stride + self.width
             # new_labels[start:end] = np.maximum(new_labels[start:end], label)
             new_labels[start:end] += label
             count[start:end] += 1
@@ -182,6 +175,7 @@ class Spectrogram(Feature):
         else:
             raise ValueError('Cannot return roc table without predicted and original labels')
 
+
 def load_feature(filename):
     try:
         with open(filename, 'rb') as featfile:
@@ -193,20 +187,21 @@ def load_feature(filename):
         raise ValueError('Loaded object is not a Feature')
     return result
 
+
 def main(args):
     for wav in args.wav:
         wavpath = Path(wav)
         selpath = wavpath.with_suffix('.selections.txt')
         outpath = wavpath.with_suffix('.feat')
-            
-        try: # read wav file
+
+        try:  # read wav file
             feature = Spectrogram(wavpath)
         except:
             _LOGGER.error("Unexpected error: %s", sys.exc_info()[0])
             continue
 
         selectiontableFound = True  # added flag checking for selection table before attempting to write feat file
-        try: # read selection table
+        try:  # read selection table
             selections = util.load_selections(selpath)
             _LOGGER.info('Read selection table %s', selpath)
             feature.selections_to_labels(selections)
@@ -214,9 +209,9 @@ def main(args):
             selectiontableFound = False
             _LOGGER.info('No selection table found.')
 
-        if selectiontableFound is True: # CHANGE?
-            try: # write feature object to file
-                with open(outpath,'wb') as pickle_file:  # changed code to avoid file must have write attribute error
+        if selectiontableFound is True:
+            try:  # write feature object to file
+                with open(outpath, 'wb') as pickle_file:  # changed code to avoid file must have write attribute error
                     pickle.dump(feature, pickle_file)
                     print('Wrote feature to', pickle_file)
                 """
@@ -225,11 +220,13 @@ def main(args):
                 """
             except IOError as e:
                 _LOGGER.error(e)
-            
+
     return 0
+
 
 if __name__ == '__main__':
     import sys
+
     parser = _make_parser()
     args = parser.parse_args()
     level = logging.DEBUG if args.verbose else logging.WARNING
