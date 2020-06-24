@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 import pickle
 import random
-from sys import exec_info
+import sys
 
 import librosa
 import numpy as np
@@ -53,11 +53,13 @@ class Spectrogram(Feature):
 
     def data_windows(self):
         """Generate the sequence of data windows."""
+        print("generate data windows") #TODO
         for idx in range(0, self._data.shape[1], self.stride):
             yield self._get_window(idx)
 
     def label_windows(self):
         """Generate the sequence of labels."""
+        print("labeling data windows") #TODO
         for idx in range(0, self._data.shape[1], self.stride):
             yield self._get_label(idx)
 
@@ -77,8 +79,9 @@ class Spectrogram(Feature):
     def read_wav(self, filename):
         """Read audio from file and compute spectrogram."""
         _LOGGER.info('Reading %s.', filename)
+		
         samples, samp_rate = librosa.load(filename, sr=None)
-
+		
         if samp_rate != _SAMP_RATE:
             _LOGGER.warning('Resampling from %s to %s Hz.', samp_rate, _SAMP_RATE)
             samples = librosa.core.resample(samples, samp_rate, _SAMP_RATE)
@@ -103,6 +106,7 @@ class Spectrogram(Feature):
     def selections_to_labels(self, selections):
         """Set the labels from a list of selections."""
         self.intervals = util.selections_to_intervals(selections)
+        print(self.intervals)
 
     @property
     def intervals(self):
@@ -129,6 +133,7 @@ class Spectrogram(Feature):
                 else:
                     idx += 1
         _LOGGER.info('Constructed %d intervals from labels.', len(intervals))
+        print(str(len(intervals)) + "generated from labels")
         return intervals
 
     @intervals.setter
@@ -200,19 +205,26 @@ def main(args):
             _LOGGER.error("Unexpected error: %s", sys.exc_info()[0])
             continue
 
+        selectiontableFound = True  # added flag checking for selection table before attempting to write feat file
         try: # read selection table
             selections = util.load_selections(selpath)
             _LOGGER.info('Read selection table %s', selpath)
             feature.selections_to_labels(selections)
         except FileNotFoundError:
+            selectiontableFound = False
             _LOGGER.info('No selection table found.')
-            pass
 
-        try: # write feature object to file
-            pickle.dump(feature, outpath)
-            print('Wrote feature to', outpath)
-        except IOError as e:
-            _LOGGER.error(e)
+        if selectiontableFound is True: # CHANGE?
+            try: # write feature object to file
+                with open(outpath,'wb') as pickle_file:  # changed code to avoid file must have write attribute error
+                    pickle.dump(feature, pickle_file)
+                    print('Wrote feature to', pickle_file)
+                """
+                pickle.dump(feature, outpath)
+                print('Wrote feature to', outpath)
+                """
+            except IOError as e:
+                _LOGGER.error(e)
             
     return 0
 

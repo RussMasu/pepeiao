@@ -6,8 +6,8 @@ import pkg_resources
 import random
 
 import numpy as np
-import keras.callbacks
-import keras.utils
+import tensorflow.keras as keras
+# import keras.utils
 
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
@@ -200,15 +200,18 @@ def main(args):
     matching_models = list(pkg_resources.iter_entry_points('pepeiao_models', args.model))
     if len(matching_models) > 1:
         _LOGGER.warn('Multiple model objects match name %s', args.model)
-    input_shape = next(training_set)[0].shape[1:]
-    model = matching_models[0].load()(input_shape)
-
+    # unpack training_set into images and labels
+    (trainImages, trainLabels) = next(training_set)
+    input_shape = trainImages.shape[1:]
+    print(input_shape)
+    #input_shape = np.asarray(trainImages)
+    model = matching_models[0].load()(input_shape)  # expecting tensorshape array
     try:
-        history = model.fit_generator(
+        history = model.fit_generator(  # may want to use model.fit instead
             training_set,
             steps_per_epoch=150,
             shuffle=False,
-            epochs=100,
+            epochs=10, #TODO 100
             verbose=1, #0-silent, 1-progessbar, 2-1line
             validation_data=validation_set,
             validation_steps=100,

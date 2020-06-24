@@ -2,6 +2,7 @@ import collections
 import csv
 import logging
 import pkg_resources
+from pathlib import Path
 
 
 from pepeiao.constants import _BEGIN_KEY, _END_KEY, _RAVEN_HEADER
@@ -20,7 +21,21 @@ def load_selections(filename):
         reader = InsensitiveReader(csvfile, delimiter='\t')
         rows = [x for x in reader]
     _LOGGER.info('Read %d selections from %s.', len(rows), filename)
+    # toCSV(rows, filename)
     return rows
+
+def toCSV(rows, filename):
+    """takes in InsenstiveDict obj converts to CSV file"""
+    # generate name for .csv file
+    selpath = Path(filename)
+    csvpath = selpath.with_suffix('.csv')
+    # write data to csv file
+    with open(csvpath, 'w', newline='') as csv_file:
+        fileWriter = csv.writer(csv_file)
+        dictKeys = list(rows[0].keys())
+        fileWriter.writerow(dictKeys)
+        for i in range(len(rows)):
+            fileWriter.writerow(list(rows[i].values()))
 
 def progress_dots(iterable, start=None, end=' Done.', char='.', stride=1):
     """Yield the items of an iterable, printing char to stdout as term is evaluated.

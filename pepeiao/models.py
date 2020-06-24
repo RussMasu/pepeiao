@@ -10,7 +10,7 @@ def conv_model(input_shape):
     """A basic convolutional model created by the 2018 Summer research project undergrads."""
     model = models.Sequential()
     model.add(layers.Reshape((*input_shape, 1), input_shape=input_shape))
-    model.add(layers.Conv2D(32, (2, 2), activation='relu'))
+    model.add(layers.Conv2D(32, (2, 2), activation='relu'))#
     model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Conv2D(16, (2, 2), activation='relu'))
     model.add(layers.MaxPooling2D((2, 2)))
@@ -50,7 +50,7 @@ def bulbul(input_shape):
     """
     model = models.Sequential()
     model.add(layers.Reshape((*input_shape, 1), input_shape=input_shape))
-    model.add(layers.Conv2D(16, (3,3)))
+    model.add(layers.Conv2D(32, (2, 2), activation='relu'))
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.MaxPooling2D((3, 3)))
     model.add(layers.Conv2D(16, (3,3)))
@@ -58,7 +58,7 @@ def bulbul(input_shape):
     model.add(layers.MaxPooling2D((3,3)))
     model.add(layers.Conv2D(16, (3,3)))
     model.add(layers.LeakyReLU(alpha = 0.01))
-    model.add(layers.MaxPooling2D((3,3)))
+    model.add(layers.MaxPooling2D((3,3))) # image size too small - negative dimension size error
     model.add(layers.Conv2D(16, (3,3)))
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.Dropout(0.5))
