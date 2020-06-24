@@ -13,7 +13,8 @@ setup(
         'numpy',
         'pillow',
         'PyWavelets',
-        'sounddevice'
+        'sounddevice',
+		'numba==0.48.0',
         ],
     entry_points={
         'console_scripts':['pepeiao = pepeiao.__main__:_main'],
