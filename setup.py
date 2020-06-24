@@ -14,7 +14,8 @@ setup(
         'pillow',
         'PyWavelets',
         'sounddevice',
-		'numba==0.48.0',
+        'numba==0.48.0',
+        'tensorflow'
         ],
     entry_points={
         'console_scripts':['pepeiao = pepeiao.__main__:_main'],
