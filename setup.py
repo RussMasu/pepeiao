@@ -7,6 +7,7 @@ setup(
     packages=['pepeiao'],
     license='MIT',
     install_requires=[
+        'setuptools==41.0.0',
         'h5py',
         'keras',
         'librosa',
