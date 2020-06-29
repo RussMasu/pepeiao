@@ -34,7 +34,6 @@ def main(args):
         predict(feature, model)
         if args.selections is not None:
             _LOGGER.info('Writing roc table')
-            print("Writing roc table")
             with open(os.path.basename(filename) + '.roc', 'w') as rocfile:
                 print('true, pred', file=rocfile)
                 for true, pred in feature.roc():

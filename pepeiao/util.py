@@ -21,7 +21,7 @@ def load_selections(filename):
         reader = InsensitiveReader(csvfile, delimiter='\t')
         rows = [x for x in reader]
     _LOGGER.info('Read %d selections from %s.', len(rows), filename)
-    toCSV(rows, filename)
+    #toCSV(rows, filename)
     return rows
 
 def toCSV(rows, filename):

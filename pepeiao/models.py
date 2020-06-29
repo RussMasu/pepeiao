@@ -57,8 +57,8 @@ def bulbul(input_shape):
     model.add(layers.MaxPooling2D((3,3)))
     model.add(layers.Conv2D(16, (3,3)))
     model.add(layers.LeakyReLU(alpha = 0.01))
-    model.add(layers.MaxPooling2D((3,3))) # image size too small - negative dimension size error
-    model.add(layers.Conv2D(16, (3,3))) #img size 2
+    model.add(layers.MaxPooling2D((3,3)))
+    model.add(layers.Conv2D(16, (3,3)))
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.Dropout(0.5))
     model.add(layers.Flatten())
