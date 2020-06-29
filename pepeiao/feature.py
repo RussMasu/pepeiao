@@ -91,9 +91,13 @@ class Spectrogram(Feature):
         self._data = librosa.stft(samples).real
         self.times = librosa.frames_to_time(range(self._data.shape[1]), sr=self.samp_rate)
 
-    def set_windowing(self, width, stride):
+    def set_windowing(self, width, stride, *option):  # called in train.py
         """Setup windowing process (argument values in seconds)."""
         self.width = librosa.time_to_frames(width, self.samp_rate)
+        # bulbul requires minimum resolution of 106
+        modelName = str(option[0])
+        if(modelName == "bulbul = pepeiao.models:bulbul" and self.width < 106):
+            self.width = 106
         self.stride = librosa.time_to_frames(stride, self.samp_rate)
         _LOGGER.info('Set width to %d columns', self.width)
         _LOGGER.info('Set stride to %d columns', self.stride)
