@@ -12,6 +12,7 @@ import tensorflow.keras as keras
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
+from matplotlib import pyplot as plt  # not in setup.py
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ def list_cycle(iterable):
         yield from lst
         _LOGGER.warn('\nExausted iterable. Restarting at beginning.\n')
 
-def data_generator(feature_list, width, offset, batch_size=100, desired_prop_ones=None):
+def data_generator(model, feature_list, width, offset, batch_size=100, desired_prop_ones=None):
     count_total = 0
     count_ones = 0
     keep_prob = 1.0
@@ -119,7 +120,7 @@ def data_generator(feature_list, width, offset, batch_size=100, desired_prop_one
         for feat_file in train_list:
             next_future = executor.submit(pepeiao.feature.load_feature, feat_file)
             current_feature = current_future.result()
-            current_feature.set_windowing(width, offset)
+            current_feature.set_windowing(width, offset, model)
             _LOGGER.info('Loaded feature %s.', current_feature.file_name)
             current_future = next_future
 
@@ -190,28 +191,32 @@ def main(args):
 
     if n_valid > 0.3 * len(args.feature):
         _LOGGER.warning('Using more than 30% of files as validation data.')
+    matching_models = list(pkg_resources.iter_entry_points('pepeiao_models', args.model))
 
-    training_set = data_generator(args.feature[:-n_valid], args.width, args.offset,
+    training_set = data_generator(matching_models[0], args.feature[:-n_valid], args.width, args.offset,
                                   args.batch_size, args.proportion_ones)
 
-    validation_set = data_generator(args.feature[-n_valid:], args.width, args.offset,
+    validation_set = data_generator(matching_models[0], args.feature[-n_valid:], args.width, args.offset,
                                     args.batch_size, args.proportion_ones)
 
-    matching_models = list(pkg_resources.iter_entry_points('pepeiao_models', args.model))
     if len(matching_models) > 1:
         _LOGGER.warn('Multiple model objects match name %s', args.model)
     # unpack training_set into images and labels
     (trainImages, trainLabels) = next(training_set)
+    """
+    #TODO
+    plt.imshow(trainImages[0], interpolation='nearest')
+    plt.gray()
+    plt.show()
+    """
     input_shape = trainImages.shape[1:]
-    print(input_shape)
-    #input_shape = np.asarray(trainImages)
     model = matching_models[0].load()(input_shape)  # expecting tensorshape array
     try:
         history = model.fit_generator(  # may want to use model.fit instead
             training_set,
             steps_per_epoch=150,
             shuffle=False,
-            epochs=10, #TODO 100
+            epochs=100,
             verbose=1, #0-silent, 1-progessbar, 2-1line
             validation_data=validation_set,
             validation_steps=100,

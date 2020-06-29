@@ -19,7 +19,6 @@ def conv_model(input_shape):
     model.add(layers.Dense(16, activation='relu'))
     model.add(layers.Dense(16, activation='relu'))
     model.add(layers.Dense(1, activation='sigmoid'))
-
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
@@ -58,7 +57,7 @@ def bulbul(input_shape):
     model.add(layers.MaxPooling2D((3,3)))
     model.add(layers.Conv2D(16, (3,3)))
     model.add(layers.LeakyReLU(alpha = 0.01))
-    model.add(layers.MaxPooling2D((3,3))) # image size too small - negative dimension size error
+    model.add(layers.MaxPooling2D((3,3)))
     model.add(layers.Conv2D(16, (3,3)))
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.Dropout(0.5))
@@ -70,15 +69,32 @@ def bulbul(input_shape):
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(1, activation = 'sigmoid'))
-
     model.compile(optimizer = 'rmsprop',
                   loss = 'binary_crossentropy',
                   metrics = ['binary_accuracy', _prob_bird])
     return model 
 
 
+def transfer(input_shape):
+    """A basic convolutional model created by the 2018 Summer research project undergrads."""
+    model = models.Sequential()
+    model.add(layers.Reshape((*input_shape, 1), input_shape=input_shape))
+    model.add(layers.Conv2D(32, (2, 2), activation='relu'))#
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(16, (2, 2), activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Flatten())
+    model.add(layers.Dropout(0.3))
+    model.add(layers.Dense(16, activation='relu'))
+    model.add(layers.Dense(16, activation='relu'))
+    model.add(layers.Dense(1, activation='sigmoid'))
+    model.compile(optimizer='rmsprop',
+                  loss='binary_crossentropy',
+                  metrics=['binary_accuracy', _prob_bird])
+    return model
 # MODELS = dict(
 #     conv = dict(model = conv_model, filepath = 'data/conv.h5', feature = pepeiao.feature.Spectrogram),
 #     bulbul = dict(model = bulbul, filepath = 'data/bulbul.h5', feature = pepeiao.feature.Spectrogram),
 #     gru = dict(model = gru_model, filepath = 'data/gru.h5', feature = pepeiao.feature.Spectrogram),
+#     transfer = dict(model = transfer, filepath = 'data/transfer.h5', feature = pepeiao.feature.Spectrogram),
 #     )

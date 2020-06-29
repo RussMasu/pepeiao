@@ -21,6 +21,7 @@ setup(
         'console_scripts':['pepeiao = pepeiao.__main__:_main'],
         'pepeiao_models': ['conv = pepeiao.models:conv_model',
                            'bulbul = pepeiao.models:bulbul',
-                           'gru = pepeiao.models:gru_model']
+                           'gru = pepeiao.models:gru_model',
+                           'transfer = pepeiao.models.transfer']
         }
 )
