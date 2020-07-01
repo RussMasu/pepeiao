@@ -7,7 +7,6 @@ setup(
     packages=['pepeiao'],
     license='MIT',
     install_requires=[
-        'setuptools==41.0.0',
         'h5py',
         'keras',
         'librosa',
@@ -16,6 +15,7 @@ setup(
         'PyWavelets',
         'sounddevice',
         'numba==0.48.0',
+        'scipy==1.4.1',
         'tensorflow'
         ],
     entry_points={
