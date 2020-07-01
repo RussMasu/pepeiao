@@ -24,7 +24,7 @@ def load_selections(filename):
     #toCSV(rows, filename)
     return rows
 
-def toCSV(rows, filename):
+def toCSV(selpath, filename):
     """takes in InsenstiveDict obj converts to CSV file"""
     # generate name for .csv file
     selpath = Path(filename)
