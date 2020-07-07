@@ -6,8 +6,7 @@ import pkg_resources
 import random
 
 import numpy as np
-import tensorflow.keras as keras
-# import keras.utils
+import keras
 
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
@@ -105,6 +104,7 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
     count_ones = 0
     keep_prob = 1.0
     result_idx = 0
+    shape_size = 420 # changed from 418 to be a multiple of 3
     keep = True
     windows = None
     labels = None
@@ -126,7 +126,7 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
 
             if windows is None:  # initilize result arrays on first iteration
                 shape = list(current_feature._get_window(0).shape)
-                shape[0] = 418
+                shape[0] = shape_size
                 windows = np.empty((batch_size, *shape), dtype=float)
                 labels = np.empty(batch_size, dtype=float)
 
@@ -135,7 +135,7 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
                 for wind, lab in current_feature.shuffled_windows():
                     if wind.shape[1] != windows.shape[2]:
                         continue
-                    windows[result_idx] = wind[47:465,]
+                    windows[result_idx] = wind[47:47+shape_size,]
                     labels[result_idx] = lab
                     result_idx += 1
                     if (result_idx % batch_size) == 0:
@@ -152,7 +152,7 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
                         keep = random.random() < keep_prob
                     if keep:
                         count_total += 1
-                        windows[result_idx] = wind[47:465,]
+                        windows[result_idx] = wind[47:47+shape_size,]
                         labels[result_idx] = lab
                         result_idx += 1
 
@@ -203,13 +203,16 @@ def main(args):
         _LOGGER.warn('Multiple model objects match name %s', args.model)
     # unpack training_set into images and labels
     (trainImages, trainLabels) = next(training_set)
+    (validationImages, validationLabels) = next(validation_set)
     """
     #TODO
     plt.imshow(trainImages[0], interpolation='nearest')
     plt.gray()
     plt.show()
     """
+    # remove batch size from input tensor
     input_shape = trainImages.shape[1:]
+    # calls arg.model in model.py
     model = matching_models[0].load()(input_shape)  # expecting tensorshape array
     try:
         history = model.fit_generator(  # may want to use model.fit instead

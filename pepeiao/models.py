@@ -1,6 +1,6 @@
 from keras import (layers, models, regularizers)
 import keras.backend as kb
-
+from keras.applications import ResNet50
 import pepeiao.feature
 
 def _prob_bird(y_true, y_pred):
@@ -76,18 +76,17 @@ def bulbul(input_shape):
 
 
 def transfer(input_shape):
-    """A basic convolutional model created by the 2018 Summer research project undergrads."""
+    """Feature Extraction model created by the 2020 Summer research project undergrads."""
     model = models.Sequential()
-    model.add(layers.Reshape((*input_shape, 1), input_shape=input_shape))
-    model.add(layers.Conv2D(32, (2, 2), activation='relu'))#
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(16, (2, 2), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
+    #input output shape must be the same
+    (x, y) = input_shape
+    output_shape = (int(x/3), y, 3)
+    # reshape needed to support 3 channels
+    model.add(layers.Reshape(output_shape, input_shape=input_shape))
+    model.add(ResNet50(include_top=False, weights="imagenet"))
+    # flatten needed to reduce dimensions down to (None, N)
     model.add(layers.Flatten())
-    model.add(layers.Dropout(0.3))
-    model.add(layers.Dense(16, activation='relu'))
-    model.add(layers.Dense(16, activation='relu'))
-    model.add(layers.Dense(1, activation='sigmoid'))
+    model.add(layers.Dense(1, activation='softmax'))
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
