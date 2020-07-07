@@ -1,8 +1,7 @@
 from keras import (layers, models, regularizers)
 import keras.backend as kb
-from keras.applications import ResNet50,Xception
+from keras.applications import ResNet50
 import pepeiao.feature
-import numpy as np
 
 def _prob_bird(y_true, y_pred):
     return kb.mean(y_true)

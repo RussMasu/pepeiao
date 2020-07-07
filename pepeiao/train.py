@@ -4,14 +4,9 @@ import itertools
 import logging
 import pkg_resources
 import random
-from PIL import Image
-import cv2
 
 import numpy as np
 import keras
-#import tensorflow.keras as keras
-#import tensorflow as tf
-# import keras.utils
 
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
