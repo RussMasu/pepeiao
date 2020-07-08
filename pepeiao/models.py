@@ -1,9 +1,6 @@
 from keras import (layers, models, regularizers)
 import keras.backend as kb
-from keras.applications import VGG16
-from keras.layers import Input, Flatten, Dense
-from keras.models import Model
-import pepeiao.feature
+from keras.applications import ResNet50
 
 def _prob_bird(y_true, y_pred):
     return kb.mean(y_true)
@@ -85,10 +82,13 @@ def transfer(input_shape):
     output_shape = (int(x/3), y, 3)
     # reshape needed to support 3 channels
     model.add(layers.Reshape(output_shape, input_shape=input_shape))
+    model.add(ResNet50(include_top=False, weights="imagenet"))
+    # flatten needed to reduce dimensions down to (None, N)
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1, activation='softmax'))
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
-
     return model
 # MODELS = dict(
 #     conv = dict(model = conv_model, filepath = 'data/conv.h5', feature = pepeiao.feature.Spectrogram),

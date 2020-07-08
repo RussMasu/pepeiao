@@ -17,7 +17,7 @@ setup(
         'numba==0.48.0',
         'scipy==1.4.1',
         'tensorflow',
-		'setuptools==41.0.0',
+        'setuptools==41.0.0',
         ],
     entry_points={
         'console_scripts':['pepeiao = pepeiao.__main__:_main'],
