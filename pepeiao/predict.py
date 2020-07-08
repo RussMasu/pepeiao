@@ -7,6 +7,7 @@ import os
 import re
 
 from pepeiao.constants import _RAVEN_HEADER, _SELECTION_KEY, _BEGIN_KEY, _END_KEY, _FILE_KEY
+from pepeiao.train import window_length
 import pepeiao.feature
 import pepeiao.models
 import pepeiao.util
@@ -15,9 +16,9 @@ from pathlib import Path
 
 _LOGGER = logging.getLogger(__name__)
 
-def predict(feature, model, shape_size, arr, out_stream=sys.stdout):
+def predict(feature, model, window_size, arr, out_stream=sys.stdout):
     """Write predicted times to console and to pred list"""
-    feature.predict(model, shape_size)
+    feature.predict(model, window_size)
     writer = csv.DictWriter(out_stream, fieldnames=[
         _SELECTION_KEY, _BEGIN_KEY, _END_KEY, _FILE_KEY],
     delimiter='\t')
@@ -71,7 +72,6 @@ def compareToCSV(compareList, filename):
             fileWriter.writerow(item)
 
 def main(args):
-    shape_size = 420
     predictList = []  # list holding predictions
     import keras.models
     try:
@@ -81,7 +81,7 @@ def main(args):
         return -1
     for filename in args.wav:
         feature = pepeiao.feature.Spectrogram(filename, args.selections)
-        predict(feature, model, shape_size, predictList)
+        predict(feature, model, window_length(), predictList)
 
         if args.selections is not None:
             # write results to csv file

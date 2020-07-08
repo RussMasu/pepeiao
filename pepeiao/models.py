@@ -8,7 +8,7 @@ def _prob_bird(y_true, y_pred):
 def conv_model(input_shape):
     """A basic convolutional model created by the 2018 Summer research project undergrads."""
     model = models.Sequential()
-    model.add(layers.Reshape((*input_shape, 1), input_shape=input_shape))
+    model.add(layers.Input(input_shape))
     model.add(layers.Conv2D(32, (2, 2), activation='relu'))#
     model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Conv2D(16, (2, 2), activation='relu'))
@@ -47,7 +47,7 @@ def bulbul(input_shape):
     https://arxiv.org/abs/1807.05812
     """
     model = models.Sequential()
-    model.add(layers.Reshape((*input_shape, 1), input_shape=input_shape))
+    model.add(layers.Input(input_shape))
     model.add(layers.Conv2D(32, (2, 2), activation='relu'))
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.MaxPooling2D((3, 3)))
@@ -75,17 +75,14 @@ def bulbul(input_shape):
 
 
 def transfer(input_shape):
-    """Feature Extraction model created by the 2020 Summer research project undergrads."""
+    """Feature Extraction model created by the 2020 Summer research project undergrad."""
     model = models.Sequential()
-    #input output shape must be the same
-    (x, y) = input_shape
-    output_shape = (int(x/3), y, 3)
-    # reshape needed to support 3 channels
-    model.add(layers.Reshape(output_shape, input_shape=input_shape))
+    model.add(layers.Input(input_shape))
     model.add(ResNet50(include_top=False, weights="imagenet"))
     # flatten needed to reduce dimensions down to (None, N)
     model.add(layers.Flatten())
     model.add(layers.Dense(1, activation='softmax'))
+    print(model.summary())
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
