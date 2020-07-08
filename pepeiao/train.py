@@ -11,7 +11,7 @@ import keras
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
-# from matplotlib import pyplot as plt  # not in setup.py
+#from matplotlib import pyplot as plt  # not in setup.py
 
 _LOGGER = logging.getLogger(__name__)
 
