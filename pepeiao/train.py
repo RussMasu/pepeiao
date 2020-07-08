@@ -11,9 +11,11 @@ import keras
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
-#from matplotlib import pyplot as plt  # not in setup.py
+
+# from matplotlib import pyplot as plt  # not in setup.py
 
 _LOGGER = logging.getLogger(__name__)
+
 
 # def _make_parser(parser=None):
 #     if parser is None:
@@ -49,7 +51,6 @@ class DataGenerator(keras.utils.Sequence):
         feature.set_windowing(width, offset)
 
         self.shape = feature._get_window(0).shape
-
 
     def __len__(self):
         return 100  # 100 batches per epoch
@@ -91,7 +92,9 @@ class DataGenerator(keras.utils.Sequence):
                         return data, labels
 
     def __del__(self):
-        print('Generated {:d} windows, with {:.3%} true labels.'.format(self.count_total, self.count_ones/self.count_total))
+        print('Generated {:d} windows, with {:.3%} true labels.'.format(self.count_total,
+                                                                        self.count_ones / self.count_total))
+
 
 def list_cycle(iterable):
     lst = list(iterable)
@@ -99,12 +102,16 @@ def list_cycle(iterable):
         yield from lst
         _LOGGER.warn('\nExausted iterable. Restarting at beginning.\n')
 
-def data_generator(model, feature_list, width, offset, batch_size=100, desired_prop_ones=None):
+def window_length():
+    length = 418
+    return length
+
+def data_generator(model, feature_list, width, offset, channels, batch_size=100, desired_prop_ones=None):
     count_total = 0
     count_ones = 0
     keep_prob = 1.0
     result_idx = 0
-    shape_size = 420 # changed from 418 to be a multiple of 3
+
     keep = True
     windows = None
     labels = None
@@ -112,11 +119,11 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
         raise ValueError('desired proportion of ones is not a valid proportion.')
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        
-        #train_list = itertools.cycle(feature_list)
+
+        # train_list = itertools.cycle(feature_list)
         train_list = list_cycle(feature_list)
         current_future = executor.submit(pepeiao.feature.load_feature, next(train_list))
-        #for feat_file in train_list:
+        # for feat_file in train_list:
         for feat_file in train_list:
             next_future = executor.submit(pepeiao.feature.load_feature, feat_file)
             current_feature = current_future.result()
@@ -126,8 +133,8 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
 
             if windows is None:  # initilize result arrays on first iteration
                 shape = list(current_feature._get_window(0).shape)
-                shape[0] = shape_size
-                windows = np.empty((batch_size, *shape), dtype=float)
+                shape[0] = window_length()
+                windows = np.empty((batch_size, *shape, channels), dtype=float)
                 labels = np.empty(batch_size, dtype=float)
 
             ## take items from the feature and put them into the arrays until full then yield arrays
@@ -135,13 +142,17 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
                 for wind, lab in current_feature.shuffled_windows():
                     if wind.shape[1] != windows.shape[2]:
                         continue
-                    windows[result_idx] = wind[47:47+shape_size,]
+                    # clone data into separate channels
+                    s_win = wind[47:47 + window_length(), ]
+                    sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
+                    # write image to window array
+                    windows[result_idx] = sample_window
                     labels[result_idx] = lab
                     result_idx += 1
                     if (result_idx % batch_size) == 0:
                         result_idx = 0
                         yield windows, labels
-            else: # keep track of proportion of ones
+            else:  # keep track of proportion of ones
                 for wind, lab in current_feature.shuffled_windows():
                     if wind.shape[1] != windows.shape[2]:
                         continue
@@ -152,11 +163,10 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
                         keep = random.random() < keep_prob
                     if keep:
                         count_total += 1
-                        windows[result_idx] = wind[47:47+shape_size,]
+                        windows[result_idx] = wind[47:47 + window_length(), ]
                         labels[result_idx] = lab
                         result_idx += 1
-
-                        if (result_idx % batch_size) == 0:
+                        if (result_idx % batch_size)== 0:
                             result_idx = 0
                             yield windows, labels
 
@@ -174,11 +184,13 @@ def data_generator(model, feature_list, width, offset, batch_size=100, desired_p
 #     return itertools.zip_longest(*args, fillvalue=fillvalue)
 
 def main(args):
-
     # level = logging.WARNING if args.quiet else logging.INFO
-    
+
     # _LOGGER.setLevel(level)
     # _LOGGER.debug(args)
+    channel = 1
+    if str(args.model) == "transfer":
+        channel = 3
 
     if args.num_validation >= 1.0:
         if args.num_validation > len(args.feature):
@@ -191,12 +203,13 @@ def main(args):
 
     if n_valid > 0.3 * len(args.feature):
         _LOGGER.warning('Using more than 30% of files as validation data.')
+
     matching_models = list(pkg_resources.iter_entry_points('pepeiao_models', args.model))
 
-    training_set = data_generator(matching_models[0], args.feature[:-n_valid], args.width, args.offset,
+    training_set = data_generator(matching_models[0], args.feature[:-n_valid], args.width, args.offset, channel,
                                   args.batch_size, args.proportion_ones)
 
-    validation_set = data_generator(matching_models[0], args.feature[-n_valid:], args.width, args.offset,
+    validation_set = data_generator(matching_models[0], args.feature[-n_valid:], args.width, args.offset, channel,
                                     args.batch_size, args.proportion_ones)
 
     if len(matching_models) > 1:
@@ -220,7 +233,7 @@ def main(args):
             steps_per_epoch=150,
             shuffle=False,
             epochs=100,
-            verbose=1, #0-silent, 1-progessbar, 2-1line
+            verbose=1,  # 0-silent, 1-progessbar, 2-1line
             validation_data=validation_set,
             validation_steps=100,
             callbacks=[keras.callbacks.EarlyStopping(patience=6)],
@@ -229,6 +242,7 @@ def main(args):
         print('\nExiting on user request.')
     model.save(args.output)
     print('Wrote model to', args.output)
+
 
 if __name__ == '__main__':
     logging.basicConfig()
