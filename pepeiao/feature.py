@@ -153,10 +153,11 @@ class Spectrogram(Feature):
         self.stride = self.width // 4
         _LOGGER.info('Reset windowing to match model.')
 
-    def predict(self, model, window_size, roc=None):
+    def predict(self, model, channels, window_size, roc=None):
         """Predict the label vector using a fitted keras model."""
         self.set_windowing_from_model(model)
         windows = np.stack([x[47:47+window_size, ] for x in self.data_windows() if x.shape[1] == self.width])
+        windows = np.repeat(windows[..., np.newaxis], channels, -1)
         window_labels = model.predict(windows)
         _LOGGER.info('found {} windows with birds'.format(
             sum(1 for x in window_labels if x > _LABEL_THRESHOLD)))
