@@ -13,6 +13,7 @@ import pepeiao.models
 import pepeiao.util
 from pepeiao.parsers import make_predict_parser as _make_parser
 from pathlib import Path
+import keras.layers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def compareToCSV(compareList, filename):
 
 def main(args):
     predictList = []  # list holding predictions
-    channel = 1  #TODO add way to infer num channels
+    channel = 3 #TODO add way to infer num channels
     import keras.models
     try:
         model = keras.models.load_model(args.model, custom_objects={'_prob_bird': pepeiao.models._prob_bird})

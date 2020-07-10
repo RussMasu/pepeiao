@@ -11,7 +11,7 @@ import keras
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
-from pepeiao.models import generate_features
+from pepeiao.models import feature_extraction
 
 # from matplotlib import pyplot as plt  # not in setup.py
 
@@ -227,32 +227,18 @@ def main(args):
     # remove batch size from input tensor
     input_shape = trainImages.shape[1:]
     # calls arg.model in model.py
-    if str(args.model) == "transfer":
-        # generate features
-        (trainFeatures, validationFeatures) = generate_features(training_set,validation_set,input_shape)
     model = matching_models[0].load()(input_shape)  # expecting tensorshape array
     try:
-        if str(args.model) == "transfer":
-            history = model.fit(
-                trainFeatures,
-                trainLabels,
-                batch_size=32,
-                epochs=100,
-                validation_data=(validationFeatures, validationLabels),
-                callbacks=[keras.callbacks.EarlyStopping(patience=6)],
-                verbose=1
-            )
-        else:
-            history = model.fit_generator(  # may want to use model.fit instead
-                training_set,
-                steps_per_epoch=150,
-                shuffle=False,
-                epochs=10,#TODO 100
-                verbose=1,  # 0-silent, 1-progessbar, 2-1line
-                validation_data=validation_set,
-                validation_steps=100,
-                callbacks=[keras.callbacks.EarlyStopping(patience=6)],
-            )
+        history = model.fit_generator(  # may want to use model.fit instead
+            training_set,
+            steps_per_epoch=150,
+            shuffle=False,
+            epochs=100,
+            verbose=1,  # 0-silent, 1-progessbar, 2-1line
+            validation_data=validation_set,
+            validation_steps=100,
+            callbacks=[keras.callbacks.EarlyStopping(patience=6)],
+        )
     except KeyboardInterrupt:
         print('\nExiting on user request.')
     model.save(args.output)
