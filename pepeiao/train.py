@@ -143,8 +143,13 @@ def data_generator(model, feature_list, width, offset, channels, batch_size=100,
                 for wind, lab in current_feature.shuffled_windows():
                     if wind.shape[1] != windows.shape[2]:
                         continue
-                    # clone data into separate channels
                     s_win = wind[47:47 + window_length(), ]
+                    # find min value
+                    s_win = s_win - np.amin(s_win)
+                    # log10 transform values in window
+                    #s_win = s_win+1
+                    #s_win = np.log10(s_win)
+                    # clone data into separate channels
                     sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
                     # write image to window array
                     windows[result_idx] = sample_window
@@ -217,6 +222,7 @@ def main(args):
         _LOGGER.warn('Multiple model objects match name %s', args.model)
     # unpack training_set into images and labels
     (trainImages, trainLabels) = next(training_set)
+    print(trainImages[0]) # TODO
     (validationImages, validationLabels) = next(validation_set)
     """
     #TODO
@@ -233,7 +239,7 @@ def main(args):
             training_set,
             steps_per_epoch=150,
             shuffle=False,
-            epochs=100,
+            epochs=2, #TODO 100
             verbose=1,  # 0-silent, 1-progessbar, 2-1line
             validation_data=validation_set,
             validation_steps=100,

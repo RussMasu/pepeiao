@@ -74,10 +74,12 @@ def compareToCSV(compareList, filename):
 
 def main(args):
     predictList = []  # list holding predictions
-    channel = 3 #TODO add way to infer num channels
+    channel = 1
     import keras.models
     try:
         model = keras.models.load_model(args.model, custom_objects={'_prob_bird': pepeiao.models._prob_bird})
+        if model.name == "transfer":
+            channel = 3
     except OSError as err:
         print("Failed to open model file: {}".format(args.model))
         return -1

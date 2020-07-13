@@ -157,6 +157,8 @@ class Spectrogram(Feature):
         """Predict the label vector using a fitted keras model."""
         self.set_windowing_from_model(model)
         windows = np.stack([x[47:47+window_size, ] for x in self.data_windows() if x.shape[1] == self.width])
+        #TODO write description
+        windows = windows -np.amin(windows)
         windows = np.repeat(windows[..., np.newaxis], channels, -1)
         window_labels = model.predict(windows)
         _LOGGER.info('found {} windows with birds'.format(
