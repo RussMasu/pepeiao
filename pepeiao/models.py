@@ -83,15 +83,14 @@ def bulbul(input_shape):
     return model
 
 def transfer(input_shape):
-    model = models.Sequential()
+    # need to rename model to infer number of channels in predict
+    model = models.Sequential(name="transfer")
     model.add(layers.Input(input_shape))
-    model.name = "transfer"
     model.add(ResNet50(include_top=False, weights="imagenet"))
     # flatten needed to reduce dimensions down to (None, N)
-    model.add(layers.Flatten())
+    model.add(layers.GlobalAveragePooling2D()) #input shape =7,7,512
+    model.add(layers.Dense(1, activation='softmax'))
     # must set shape manually or Dense dim not defined error
-    model.add(layers.Dense(1, activation='softmax', input_shape=(None, 57344)))
-    model.summary()
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
