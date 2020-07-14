@@ -11,7 +11,6 @@ import keras
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
-from pepeiao.models import feature_extraction
 
 # from matplotlib import pyplot as plt  # not in setup.py
 
