@@ -1,19 +1,10 @@
 from keras import (layers, models, regularizers)
 import keras.backend as kb
-from keras.applications import ResNet50, VGG16
-from keras.preprocessing import image
-from keras import callbacks
-import numpy as np
+from keras.applications import ResNet50
 import keras
 
 def _prob_bird(y_true, y_pred):
     return kb.mean(y_true)
-
-def feature_extraction(images):
-    (sample_num, x, y, channels) = images.shape
-    model = VGG16(weights='imagenet', include_top=False)
-    features = model.predict(images)
-    return features
 
 def conv_model(input_shape):
     """A basic convolutional model created by the 2018 Summer research project undergrads."""

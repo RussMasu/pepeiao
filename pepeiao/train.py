@@ -238,7 +238,7 @@ def main(args):
             training_set,
             steps_per_epoch=150,
             shuffle=False,
-            epochs=2, #TODO 100
+            epochs=100,
             verbose=1,  # 0-silent, 1-progessbar, 2-1line
             validation_data=validation_set,
             validation_steps=100,
