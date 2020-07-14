@@ -222,7 +222,6 @@ def main(args):
         _LOGGER.warn('Multiple model objects match name %s', args.model)
     # unpack training_set into images and labels
     (trainImages, trainLabels) = next(training_set)
-    print(trainImages[0]) # TODO
     (validationImages, validationLabels) = next(validation_set)
     """
     #TODO

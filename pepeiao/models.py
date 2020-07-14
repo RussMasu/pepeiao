@@ -4,6 +4,7 @@ from keras.applications import ResNet50, VGG16
 from keras.preprocessing import image
 from keras import callbacks
 import numpy as np
+import keras
 
 def _prob_bird(y_true, y_pred):
     return kb.mean(y_true)
@@ -83,14 +84,19 @@ def bulbul(input_shape):
     return model
 
 def transfer(input_shape):
-    # need to rename model to infer number of channels in predict
-    model = models.Sequential(name="transfer")
-    model.add(layers.Input(input_shape))
-    model.add(ResNet50(include_top=False, weights="imagenet"))
-    # flatten needed to reduce dimensions down to (None, N)
-    model.add(layers.GlobalAveragePooling2D()) #input shape =7,7,512
-    model.add(layers.Dense(1, activation='softmax'))
+    base_model = ResNet50(include_top=False,
+                     weights="imagenet",
+                     input_shape=input_shape)
+    # freeze base model
+    base_model.trainable = False
+    # create new model
+    inputs = keras.Input(shape=(input_shape))
+    x = base_model(inputs, training=False)
+    x = keras.layers.GlobalAveragePooling2D()(x)
+    outputs = keras.layers.Dense(1)(x)
+    model = keras.Model(inputs, outputs)
     # must set shape manually or Dense dim not defined error
+    model.summary()
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
