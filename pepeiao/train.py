@@ -11,7 +11,7 @@ import keras
 from pepeiao.feature import Spectrogram, normalizeImage
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
-import cv2
+#import cv2
 
 _LOGGER = logging.getLogger(__name__)
 
