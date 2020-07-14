@@ -163,8 +163,7 @@ class Spectrogram(Feature):
         self.set_windowing_from_model(model)
         windows = np.stack([x[47:47+window_size, ] for x in self.data_windows() if x.shape[1] == self.width])
         # remove negative values from data
-        if np.amin(windows) < 0:
-            windows = windows - np.amin(windows)
+        windows = normalizeImage(windows)
         windows = np.repeat(windows[..., np.newaxis], channels, -1)
         window_labels = model.predict(windows)
         _LOGGER.info('found {} windows with birds'.format(
@@ -187,6 +186,14 @@ class Spectrogram(Feature):
             return zip(self.old_labels, self.labels)
         else:
             raise ValueError('Cannot return roc table without predicted and original labels')
+
+
+def normalizeImage(window):
+    """normalizes image data from window"""
+    new_window = window
+    # remove negative values from window data by adding abs(min)
+     #   new_window = window + abs(np.amin(window))
+    return new_window
 
 
 def load_feature(filename):

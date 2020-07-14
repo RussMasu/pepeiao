@@ -8,11 +8,10 @@ import random
 import numpy as np
 import keras
 
-from pepeiao.feature import Spectrogram
+from pepeiao.feature import Spectrogram, normalizeImage
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
-
-# from matplotlib import pyplot as plt  # not in setup.py
+import cv2
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,10 +143,7 @@ def data_generator(model, feature_list, width, offset, channels, batch_size=100,
                         continue
                     s_win = wind[47:47 + window_length(), ]
                     # find min value
-                    s_win = s_win - np.amin(s_win)
-                    # log10 transform values in window
-                    #s_win = s_win+1
-                    #s_win = np.log10(s_win)
+                    s_win = normalizeImage(s_win)
                     # clone data into separate channels
                     sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
                     # write image to window array
@@ -224,9 +220,10 @@ def main(args):
     (validationImages, validationLabels) = next(validation_set)
     """
     #TODO
-    plt.imshow(trainImages[0], interpolation='nearest')
-    plt.gray()
-    plt.show()
+    img = trainImages[0]
+    cv2.imshow('image', img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     """
     # remove batch size from input tensor
     input_shape = trainImages.shape[1:]

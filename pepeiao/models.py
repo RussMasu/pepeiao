@@ -87,7 +87,6 @@ def transfer(input_shape):
     outputs = keras.layers.Dense(1)(x)
     model = keras.Model(inputs, outputs)
     # must set shape manually or Dense dim not defined error
-    model.summary()
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
