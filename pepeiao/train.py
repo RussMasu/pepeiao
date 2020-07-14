@@ -11,6 +11,7 @@ import keras
 from pepeiao.feature import Spectrogram
 from pepeiao.parsers import make_train_parser as _make_parser
 import pepeiao.util
+from pepeiao.models import feature_extraction
 
 # from matplotlib import pyplot as plt  # not in setup.py
 
@@ -142,8 +143,13 @@ def data_generator(model, feature_list, width, offset, channels, batch_size=100,
                 for wind, lab in current_feature.shuffled_windows():
                     if wind.shape[1] != windows.shape[2]:
                         continue
-                    # clone data into separate channels
                     s_win = wind[47:47 + window_length(), ]
+                    # find min value
+                    s_win = s_win - np.amin(s_win)
+                    # log10 transform values in window
+                    #s_win = s_win+1
+                    #s_win = np.log10(s_win)
+                    # clone data into separate channels
                     sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
                     # write image to window array
                     windows[result_idx] = sample_window

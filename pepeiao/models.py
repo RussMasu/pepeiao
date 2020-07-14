@@ -1,6 +1,7 @@
 from keras import (layers, models, regularizers)
 import keras.backend as kb
 from keras.applications import ResNet50
+import keras
 
 def _prob_bird(y_true, y_pred):
     return kb.mean(y_true)
@@ -68,25 +69,30 @@ def bulbul(input_shape):
     model.add(layers.LeakyReLU(alpha = 0.01))
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(1, activation = 'sigmoid'))
-    model.compile(optimizer = 'rmsprop',
-                  loss = 'binary_crossentropy',
-                  metrics = ['binary_accuracy', _prob_bird])
-    return model 
-
-
-def transfer(input_shape):
-    """Feature Extraction model created by the 2020 Summer research project undergrad."""
-    model = models.Sequential()
-    model.add(layers.Input(input_shape))
-    model.add(ResNet50(include_top=False, weights="imagenet"))
-    # flatten needed to reduce dimensions down to (None, N)
-    model.add(layers.Flatten())
-    model.add(layers.Dense(1, activation='softmax'))
-    print(model.summary())
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])
     return model
+
+def transfer(input_shape):
+    base_model = ResNet50(include_top=False,
+                     weights="imagenet",
+                     input_shape=input_shape)
+    # freeze base model
+    base_model.trainable = False
+    # create new model
+    inputs = keras.Input(shape=(input_shape))
+    x = base_model(inputs, training=False)
+    x = keras.layers.GlobalAveragePooling2D()(x)
+    outputs = keras.layers.Dense(1)(x)
+    model = keras.Model(inputs, outputs)
+    # must set shape manually or Dense dim not defined error
+    model.summary()
+    model.compile(optimizer='rmsprop',
+                  loss='binary_crossentropy',
+                  metrics=['binary_accuracy', _prob_bird])
+    return model
+
 # MODELS = dict(
 #     conv = dict(model = conv_model, filepath = 'data/conv.h5', feature = pepeiao.feature.Spectrogram),
 #     bulbul = dict(model = bulbul, filepath = 'data/bulbul.h5', feature = pepeiao.feature.Spectrogram),
