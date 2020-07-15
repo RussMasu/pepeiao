@@ -88,7 +88,8 @@ class Spectrogram(Feature):
 
         self.file_name = filename
         self.samp_rate = _SAMP_RATE
-        self._data = librosa.stft(samples).real
+        # return magnitude of frequency bin f at frame t
+        self._data = np.abs(librosa.stft(samples).real)
         self.times = librosa.frames_to_time(range(self._data.shape[1]), sr=self.samp_rate)
 
     def set_windowing(self, width, stride, *option):  # called in train.py
