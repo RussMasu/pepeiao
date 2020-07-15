@@ -37,6 +37,8 @@ def compare(selpath, filename, arr, epsilon):
         if selection.get('view') == 'Spectrogram 1':
             start_t = float(selection.get('begin time (s)', default=None))
             end_t = float(selection.get('end time (s)', default=None))
+            # print selection table data
+            # print(start_t, end_t)
             result = "FN"
             for item in arr:
                 (arrID, start_p, end_p, file) = item
@@ -86,7 +88,6 @@ def main(args):
     for filename in args.wav:
         feature = pepeiao.feature.Spectrogram(filename, args.selections)
         predict(feature, model, channel, window_length(), predictList)
-
         if args.selections is not None:
             # write results to csv file
             compareToCSV(compare(args.selections, filename, predictList, 2), filename)
