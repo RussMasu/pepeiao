@@ -191,9 +191,10 @@ class Spectrogram(Feature):
 
 def normalizeImage(window):
     """normalizes image data from window"""
-    new_window = window
-    # remove negative values from window data by adding abs(min)
-     #   new_window = window + abs(np.amin(window))
+    min = -10.77755
+    max = -0.373016
+    new_window = np.log10(window)
+    new_window = (new_window - min)/(max-min)
     return new_window
 
 
