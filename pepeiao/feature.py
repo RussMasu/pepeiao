@@ -165,7 +165,9 @@ class Spectrogram(Feature):
         windows = np.stack([x[47:47+window_size, ] for x in self.data_windows() if x.shape[1] == self.width])
         # remove negative values from data
         windows = normalizeImage(windows)
-        windows = np.repeat(windows[..., np.newaxis], channels, -1)
+        # gru model does not take in channel arg
+        if channels > 0:
+            windows = np.repeat(windows[..., np.newaxis], channels, -1)
         window_labels = model.predict(windows)
         _LOGGER.info('found {} windows with birds'.format(
             sum(1 for x in window_labels if x > _LABEL_THRESHOLD)))

@@ -133,19 +133,25 @@ def data_generator(model, feature_list, width, offset, channels, batch_size=100,
             if windows is None:  # initilize result arrays on first iteration
                 shape = list(current_feature._get_window(0).shape)
                 shape[0] = window_length()
-                windows = np.empty((batch_size, *shape, channels), dtype=float)
+                # input to gru model does not use channel dim
+                if str(model) == 'gru = pepeiao.models:gru_model':
+                    windows = np.empty((batch_size, *shape), dtype=float)
+                else:
+                    windows = np.empty((batch_size, *shape, channels), dtype=float)
                 labels = np.empty(batch_size, dtype=float)
 
-            ## take items from the feature and put them into the arrays until full then yield arrays
+            # take items from the feature and put them into the arrays until full then yield arrays
             if desired_prop_ones is None:
                 for wind, lab in current_feature.shuffled_windows():
                     if wind.shape[1] != windows.shape[2]:
                         continue
                     s_win = wind[47:47 + window_length(), ]
-                    # find min value
                     s_win = normalizeImage(s_win)
-                    # clone data into separate channels
-                    sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
+                    # input to gru model does not use channel dim
+                    if str(model) == 'gru = pepeiao.models:gru_model':
+                        sample_window = s_win
+                    else:
+                        sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
                     # write image to window array
                     windows[result_idx] = sample_window
                     labels[result_idx] = lab

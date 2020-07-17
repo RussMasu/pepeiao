@@ -80,8 +80,11 @@ def main(args):
     import keras.models
     try:
         model = keras.models.load_model(args.model, custom_objects={'_prob_bird': pepeiao.models._prob_bird})
-        if model.name == "model":
+        print(model.name)
+        if model.name == "transfer":
             channel = 3
+        elif model.name == "gru":
+            channel = 0
     except OSError as err:
         print("Failed to open model file: {}".format(args.model))
         return -1

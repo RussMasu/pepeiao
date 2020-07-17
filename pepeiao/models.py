@@ -26,7 +26,7 @@ def conv_model(input_shape):
 
 def gru_model(input_shape):
     """A basic GRU-based model created by 2018 Summer undergrad students."""
-    model = models.Sequential()
+    model = models.Sequential(name="gru")
     model.add(layers.GRU(64, input_shape=input_shape, return_sequences=True))
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu', kernel_regularizer=regularizers.l2(0.01)))
@@ -83,9 +83,11 @@ def transfer(input_shape):
     # create new model
     inputs = keras.Input(shape=(input_shape))
     x = base_model(inputs, training=False)
+    x = keras.layers.Conv2D(16, (2, 2), activation='relu')(x)
     x = keras.layers.GlobalAveragePooling2D()(x)
     outputs = keras.layers.Dense(1)(x)
-    model = keras.Model(inputs, outputs)
+    model = keras.Model(inputs, outputs, name="transfer")
+    model.summary()
     # must set shape manually or Dense dim not defined error
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
