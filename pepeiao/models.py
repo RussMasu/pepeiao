@@ -27,7 +27,7 @@ def conv_model(input_shape):
 def gru_model(input_shape):
     """A basic GRU-based model created by 2018 Summer undergrad students."""
     model = models.Sequential(name="gru")
-    mmodel.add(layers.GRU(64, input_shape=input_shape, return_sequences=True))
+    model.add(layers.GRU(64, input_shape=input_shape, return_sequences=True))
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu', kernel_regularizer=regularizers.l2(0.01)))
     model.add(layers.Dense(1, activation='sigmoid'))
