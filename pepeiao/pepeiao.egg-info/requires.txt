@@ -1,0 +1,11 @@
+h5py
+keras
+librosa
+numpy
+pillow
+PyWavelets
+sounddevice
+numba==0.48.0
+scipy==1.4.1
+tensorflow
+setuptools==41.0.0
