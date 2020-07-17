@@ -16,7 +16,7 @@ setup(
         'sounddevice',
         'numba==0.48.0',
         'scipy==1.4.1',
-        'tensorflow==41.0.0',
+        'tensorflow',
         ],
     entry_points={
         'console_scripts':['pepeiao = pepeiao.__main__:_main'],
