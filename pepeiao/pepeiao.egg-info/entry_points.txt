@@ -1,9 +1,0 @@
-[console_scripts]
-pepeiao = pepeiao.__main__:_main
-
-[pepeiao_models]
-bulbul = pepeiao.models:bulbul
-conv = pepeiao.models:conv_model
-gru = pepeiao.models:gru_model
-transfer = pepeiao.models:transfer
-
