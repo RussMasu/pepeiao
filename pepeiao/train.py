@@ -170,10 +170,17 @@ def data_generator(model, feature_list, width, offset, channels, batch_size=100,
                         keep = random.random() < keep_prob
                     if keep:
                         count_total += 1
-                        windows[result_idx] = wind[47:47 + window_length(), ]
+                        s_win = wind[47:47 + window_length(), ]
+                        s_win = normalizeImage(s_win)
+                        # input to gru model does not use channel dim
+                        if str(model) == 'gru = pepeiao.models:gru_model':
+                            sample_window = s_win
+                        else:
+                            sample_window = np.repeat(s_win[..., np.newaxis], channels, -1)
+                        windows[result_idx] = sample_window
                         labels[result_idx] = lab
                         result_idx += 1
-                        if (result_idx % batch_size)== 0:
+                        if (result_idx % batch_size) == 0:
                             result_idx = 0
                             yield windows, labels
 
@@ -223,7 +230,6 @@ def main(args):
         _LOGGER.warn('Multiple model objects match name %s', args.model)
     # unpack training_set into images and labels
     (trainImages, trainLabels) = next(training_set)
-    (validationImages, validationLabels) = next(validation_set)
     """
     #TODO
     img = trainImages[0]
@@ -236,7 +242,8 @@ def main(args):
     # calls arg.model in model.py
     model = matching_models[0].load()(input_shape)  # expecting tensorshape array
     try:
-        history = model.fit_generator(  # may want to use model.fit instead
+        # model.fit generator depreciated use model.fit instead
+        history = model.fit(
             training_set,
             steps_per_epoch=150,
             shuffle=False,

@@ -78,17 +78,12 @@ def transfer(input_shape):
     base_model = ResNet50(include_top=False,
                      weights="imagenet",
                      input_shape=input_shape)
-    # freeze base model
-    base_model.trainable = False
-    # create new model
-    inputs = keras.Input(shape=(input_shape))
-    x = base_model(inputs, training=False)
-    x = keras.layers.Conv2D(16, (2, 2), activation='relu')(x)
-    x = keras.layers.GlobalAveragePooling2D()(x)
-    outputs = keras.layers.Dense(1)(x)
+    inputs = keras.Input(shape=input_shape)
+    #x = base_model(inputs, training=False)
+    x = base_model(inputs)
+    x = layers.GlobalAveragePooling2D()(x)
+    outputs = layers.Dense(1)(x)
     model = keras.Model(inputs, outputs, name="transfer")
-    model.summary()
-    # must set shape manually or Dense dim not defined error
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', _prob_bird])

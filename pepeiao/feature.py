@@ -89,7 +89,8 @@ class Spectrogram(Feature):
         self.file_name = filename
         self.samp_rate = _SAMP_RATE
         # return magnitude of frequency bin f at frame t
-        self._data = np.abs(librosa.stft(samples).real)
+        #self._data = np.abs(librosa.stft(samples).real)
+        self._data = librosa.stft(samples)
         self.times = librosa.frames_to_time(range(self._data.shape[1]), sr=self.samp_rate)
 
     def set_windowing(self, width, stride, *option):  # called in train.py
@@ -193,11 +194,13 @@ class Spectrogram(Feature):
 
 def normalizeImage(window):
     """normalizes image data from window"""
-    min = -10.77755
-    max = -0.373016
-    new_window = np.log10(window)
-    new_window = (new_window - min)/(max-min)
-    return new_window
+    #min = -10.77755
+    #max = -0.373016
+    #new_window = np.log10(window)
+    #new_window = (new_window - min)/(max-min)
+    #new_window = new_window * 255
+    #return new_window
+    return window
 
 
 def load_feature(filename):
