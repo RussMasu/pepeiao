@@ -1,4 +1,5 @@
 import tkinter as tk
+import subprocess
 import pepeiao.feature
 
 class GraphicalUserInterface:
@@ -24,4 +25,5 @@ class GraphicalUserInterface:
 
 
 # app = GraphicalUserInterface()
-pepeiao.feature.main("")
+file = "C:/Users/Russ Masuda/PycharmProjects/birdNN/data/S4A01450_20170506_063300.wav"
+subprocess.run(["pepeiao", "feature", file])
