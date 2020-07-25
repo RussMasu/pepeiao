@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 import pickle
 import random
-import sys
 
 import librosa
 import numpy as np
