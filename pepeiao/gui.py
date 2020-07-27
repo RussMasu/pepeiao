@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import subprocess
-import sys
-from io import StringIO
+from subprocess import check_output, CalledProcessError
 
 
 class GraphicalUserInterface(tk.Tk):
@@ -37,9 +35,6 @@ class GraphicalUserInterface(tk.Tk):
         # allow grid to finishing loading before generating event
         p.update()
         p.event_generate("<<onDisplay>>")
-
-
-
 
 
 class inputPage(tk.Frame):
@@ -95,23 +90,29 @@ class featurePage2(tk.Frame):
         self.label.grid(row=0, column=0, padx=100, pady=20)
 
         button = ttk.Button(self, text="<<Back",
-                            command=lambda: controller.show_frame(featurePage))
+                            command=self.resetBack)
         button.grid(row=1, column=0)
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
 
     def createFile(self, event):
         file = self.controller.var
-        # create temp stream
-        temp_out = StringIO()
-        # replace stdout with temp stream
-        sys.stdout = temp_out
-        subprocess.run(['pepeiao', 'feature', file])
         self.controller.var = None
-        # create temp stream
-        self.label.configure(text=temp_out.read())
-        #TODO redirec stdout/stderr to label
+        try:
+            # return command output as byte string
+            temp = check_output(['pepeiao', 'feature', file])
+            self.label.configure(text=temp)
+        except CalledProcessError:
+            # handle non zero exit status
+            self.label.configure(text="Invalid file name received")
 
+    def resetBack(self):
+        # change label to initial state and go to page
+        self.label.configure(text="Creating Feat Files. . .")
+        self.controller.show_frame(featurePage)
+    #TODO shorten required input path
+    #TODO fix error where only part of window is shown
+    #TODO surpress not responding message on executing command
 
 app = GraphicalUserInterface()
 app.title('Pepeiao Neural Network')
