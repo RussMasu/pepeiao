@@ -7,6 +7,8 @@ class GraphicalUserInterface(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.var = None
+        self.model = None
+        self.saveName = None
 
         # create container object
         container = tk.Frame(self)
@@ -18,7 +20,7 @@ class GraphicalUserInterface(tk.Tk):
         # frames dict to hold pages
         self.frames = {}
 
-        for F in (inputPage, featurePage, featurePage2):
+        for F in (inputPage, featurePage, featurePage2, trainPage, trainPage2):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -43,13 +45,16 @@ class inputPage(tk.Frame):
         label = tk.Label(self, text=".feat files are required to train the neural network.\n"
                                     "  Do you wish to load existing .feat "
                                     "files or create new .feat files from .wav files?")
-        #label.grid(row=0, column=0, padx=10, pady=10)
-        label.pack(padx=10, pady=20)
+        label.grid(row=0, column=0, padx=10, pady=10)
+        #label.pack(padx=10, pady=20)
 
         button = tk.Button(self, text="Create",
                             command=lambda: controller.show_frame(featurePage))
-        #button.grid(row=2, column=0)
-        button.pack(side='right')
+        button.grid(row=1, column=0, sticky='E')
+
+        button1 = tk.Button(self, text="Load",
+                           command=lambda: controller.show_frame(trainPage))
+        button1.grid(row=1, column=1)
 
 
 class featurePage(tk.Frame):
@@ -57,7 +62,7 @@ class featurePage(tk.Frame):
         # need to reference controller in function
         self.controller = controller
         tk.Frame.__init__(self, parent)
-        self.label = ttk.Label(self, text="Enter Feat Files")
+        self.label = ttk.Label(self, text="Enter Wav Files")
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.text = tk.Text(self)
@@ -74,10 +79,10 @@ class featurePage(tk.Frame):
 
 
     def processText(self, *event):
-        str = self.text.get("1.0", tk.END)
+        s = self.text.get("1.0", tk.END)
         # remove last char from var
-        str = str[:-1]
-        self.controller.var = str
+        s = s[:-1]
+        self.controller.var = s
         self.controller.show_frame(featurePage2)
 
 
@@ -113,6 +118,88 @@ class featurePage2(tk.Frame):
     #TODO shorten required input path
     #TODO fix error where only part of window is shown
     #TODO surpress not responding message on executing command
+
+
+class trainPage(tk.Frame):
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+
+        # label and text box to enter feat files
+        self.label = ttk.Label(self, text="Enter Feat Files")
+        self.label.grid(row=0, column=0, padx=10, pady=10)
+        self.text = tk.Text(self)
+        self.text.grid(row=0, column=1)
+
+        # label and drop down menu holding model choices
+        self.label1 = ttk.Label(self, text="Select model")
+        self.label1.grid(row=1, column=0, sticky='E')
+
+        choices = {'bulbul', 'conv', 'gru', 'transfer'}
+        self.option = tk.StringVar(self)
+        self.option.set('bulbul')
+        menu = tk.OptionMenu(self, self.option, *choices)
+        menu.grid(row=1, column=1, sticky='W')
+
+        # label and entry box to enter saved name
+        self.label2 = ttk.Label(self, text="Save as:")
+        self.label2.grid(row=2, column=0)
+        self.entry = ttk.Entry(self)
+        self.entry.grid(row=2, column=1, sticky='W')
+
+        # back and submit buttons
+        button = ttk.Button(self, text="<<Back",
+                            command=lambda: controller.show_frame(inputPage))
+        button.grid(row=3, column=0)
+
+        button1 = ttk.Button(self, text="Submit",
+                             command=self.processText)
+        button1.grid(row=3, column=2)
+
+
+    def processText(self, *event):
+        s = self.text.get("1.0", tk.END)
+        # remove last char from var
+        s = s[:-1]
+        self.controller.var = s
+        self.controller.model = self.option.get()
+        self.controller.saveName = self.entry.get()
+        self.controller.show_frame(trainPage2)
+
+
+class trainPage2(tk.Frame):
+    def __init__(self, parent, controller):
+        # need to reference controller in function
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        self.label = ttk.Label(self, text="Creating Model File. . .")
+        self.label.grid(row=0, column=0, padx=100, pady=20)
+
+        button = ttk.Button(self, text="<<Back",
+                            command=self.resetBack)
+        button.grid(row=1, column=0)
+        # when page is displayed create file
+        self.bind("<<onDisplay>>", self.createFile)
+
+    def createFile(self, event):
+        file = self.controller.var
+        model = self.controller.model
+        saveName = self.controller.saveName
+        self.controller.var = None
+        self.controller.model = None
+        self.controller.saveName = None
+        try:
+            # return command output as byte string
+            temp = check_output(['pepeiao', 'train', model, file, saveName])
+            self.label.configure(text=temp)
+        except CalledProcessError:
+            # handle non zero exit status
+            self.label.configure(text="Invalid argument received")
+
+    def resetBack(self):
+        # change label to initial state and go to page
+        self.label.configure(text="Creating Model File. . .")
+        self.controller.show_frame(trainPage)
 
 app = GraphicalUserInterface()
 app.title('Pepeiao Neural Network')
