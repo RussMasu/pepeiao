@@ -1,6 +1,33 @@
 import tkinter as tk
 from tkinter import ttk
 from subprocess import check_output, CalledProcessError
+from os import getcwd, path
+
+
+def parse(string):
+    """Given a string adds current dir to string"""
+    newstring = []
+    word = []
+    for i in range(0, len(string)+1):
+        if i == len(string):
+            # join char array to form string
+            temp = ""
+            temp = temp.join(word)
+            word.clear()
+            # write string to newstring arr
+            newstring.append(path.dirname(getcwd()) + "/" + temp)
+        elif string[i] is ' ':
+            # join char array to form string
+            temp = ""
+            temp = temp.join(word)
+            word.clear()
+            # write string to newstring arr
+            newstring.append(path.dirname(getcwd()) + "/" + temp)
+        else:
+            word.append(string[i])
+    ans = ""
+    ans = ans.join(newstring)
+    return newstring
 
 
 class GraphicalUserInterface(tk.Tk):
@@ -20,12 +47,12 @@ class GraphicalUserInterface(tk.Tk):
         # frames dict to hold pages
         self.frames = {}
 
-        for F in (inputPage, featurePage, featurePage2, trainPage, trainPage2):
+        for F in (homePage, inputPage, featurePage, featurePage2, trainPage, trainPage2, predictPage, predictPage2):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame(inputPage)
+        self.show_frame(homePage)
 
     def show_frame(self, page):
         # remove all frames from grid
@@ -39,6 +66,27 @@ class GraphicalUserInterface(tk.Tk):
         p.event_generate("<<onDisplay>>")
 
 
+class homePage(tk.Frame):
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Make predictions from model file or Create a model file?")
+        label.grid(row=0, column=0, padx=10, pady=10)
+
+        # buttons with quit, create, and predict options
+        button = ttk.Button(self, text="Quit", command=self.closeWindow)
+        button.grid(row=1, column=0, sticky='W')
+
+        button = ttk.Button(self, text="Create", command=lambda: controller.show_frame(inputPage))
+        button.grid(row=1, column=1, sticky='E')
+        #TODO update link to predictPage
+        button1 = ttk.Button(self, text="Predict", command=lambda: controller.show_frame(predictPage))
+        button1.grid(row=1, column=2)
+
+    def closeWindow(self):
+        self.controller.destroy()
+
+
 class inputPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -46,15 +94,15 @@ class inputPage(tk.Frame):
                                     "  Do you wish to load existing .feat "
                                     "files or create new .feat files from .wav files?")
         label.grid(row=0, column=0, padx=10, pady=10)
-        #label.pack(padx=10, pady=20)
 
-        button = tk.Button(self, text="Create",
-                            command=lambda: controller.show_frame(featurePage))
-        button.grid(row=1, column=0, sticky='E')
+        button1 = tk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
+        button1.grid(row=1, column=0, sticky='W')
 
-        button1 = tk.Button(self, text="Load",
-                           command=lambda: controller.show_frame(trainPage))
-        button1.grid(row=1, column=1)
+        button = tk.Button(self, text="Create", command=lambda: controller.show_frame(featurePage))
+        button.grid(row=1, column=1, sticky='E')
+
+        button1 = tk.Button(self, text="Load", command=lambda: controller.show_frame(trainPage))
+        button1.grid(row=1, column=2)
 
 
 class featurePage(tk.Frame):
@@ -62,19 +110,17 @@ class featurePage(tk.Frame):
         # need to reference controller in function
         self.controller = controller
         tk.Frame.__init__(self, parent)
-        self.label = ttk.Label(self, text="Enter Wav Files")
+        self.label = ttk.Label(self, text="Enter training .wav files")
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.text = tk.Text(self)
         self.text.bind("<Return>", self.processText)
         self.text.grid(row=1, column=0)
 
-        button = ttk.Button(self, text="<<Back",
-                            command=lambda: controller.show_frame(inputPage))
+        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
         button.grid(row=2, column=0)
 
-        button1 = ttk.Button(self, text="Submit",
-                             command=self.processText)
+        button1 = ttk.Button(self, text="Submit", command=self.processText)
         button1.grid(row=2, column=1)
 
 
@@ -82,6 +128,8 @@ class featurePage(tk.Frame):
         s = self.text.get("1.0", tk.END)
         # remove last char from var
         s = s[:-1]
+        s = parse(s)
+        # print(s)
         self.controller.var = s
         self.controller.show_frame(featurePage2)
 
@@ -105,7 +153,10 @@ class featurePage2(tk.Frame):
         self.controller.var = None
         try:
             # return command output as byte string
-            temp = check_output(['pepeiao', 'feature', file])
+            args = ["pepeiao", "feature"]
+            for item in file:
+                args.append(item)
+            temp = check_output(args)
             self.label.configure(text=temp)
         except CalledProcessError:
             # handle non zero exit status
@@ -115,7 +166,8 @@ class featurePage2(tk.Frame):
         # change label to initial state and go to page
         self.label.configure(text="Creating Feat Files. . .")
         self.controller.show_frame(featurePage)
-    #TODO shorten required input path
+
+    #TODO work on prediction pages
     #TODO fix error where only part of window is shown
     #TODO surpress not responding message on executing command
 
@@ -126,7 +178,7 @@ class trainPage(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         # label and text box to enter feat files
-        self.label = ttk.Label(self, text="Enter Feat Files")
+        self.label = ttk.Label(self, text="Enter .feat files")
         self.label.grid(row=0, column=0, padx=10, pady=10)
         self.text = tk.Text(self)
         self.text.grid(row=0, column=1)
@@ -148,12 +200,10 @@ class trainPage(tk.Frame):
         self.entry.grid(row=2, column=1, sticky='W')
 
         # back and submit buttons
-        button = ttk.Button(self, text="<<Back",
-                            command=lambda: controller.show_frame(inputPage))
+        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
         button.grid(row=3, column=0)
 
-        button1 = ttk.Button(self, text="Submit",
-                             command=self.processText)
+        button1 = ttk.Button(self, text="Submit", command=self.processText)
         button1.grid(row=3, column=2)
 
 
@@ -161,6 +211,7 @@ class trainPage(tk.Frame):
         s = self.text.get("1.0", tk.END)
         # remove last char from var
         s = s[:-1]
+        s = parse(s)
         self.controller.var = s
         self.controller.model = self.option.get()
         self.controller.saveName = self.entry.get()
@@ -175,8 +226,7 @@ class trainPage2(tk.Frame):
         self.label = ttk.Label(self, text="Creating Model File. . .")
         self.label.grid(row=0, column=0, padx=100, pady=20)
 
-        button = ttk.Button(self, text="<<Back",
-                            command=self.resetBack)
+        button = ttk.Button(self, text="<<Back", command=self.resetBack)
         button.grid(row=1, column=0)
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
@@ -188,20 +238,103 @@ class trainPage2(tk.Frame):
         self.controller.var = None
         self.controller.model = None
         self.controller.saveName = None
-        try:
-            # return command output as byte string
-            temp = check_output(['pepeiao', 'train', model, file, saveName])
-            self.label.configure(text=temp)
-        except CalledProcessError:
-            # handle non zero exit status
-            self.label.configure(text="Invalid argument received")
+        # check for correct extension
+        if saveName[-3:] != '.h5':
+            self.label.configure(text='saved name must end with .h5')
+        else:
+            try:
+                # return command output as byte string
+                args = ["pepeiao", "train", model]
+                for item in file:
+                    args.append(item)
+                args.append(saveName)
+                temp = check_output(args)
+                self.label.configure(text=temp)
+            except CalledProcessError:
+                # handle non zero exit status
+                self.label.configure(text="Invalid argument received")
 
     def resetBack(self):
         # change label to initial state and go to page
         self.label.configure(text="Creating Model File. . .")
         self.controller.show_frame(trainPage)
 
+class predictPage(tk.Frame):
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+
+        # label and text box to enter feat files
+        self.label = ttk.Label(self, text="Enter testing .wav files")
+        self.label.grid(row=0, column=0, padx=10, pady=10)
+        self.text = tk.Text(self)
+        self.text.grid(row=0, column=1)
+
+        # label and entry box to enter saved name
+        self.label2 = ttk.Label(self, text="Load model:")
+        self.label2.grid(row=2, column=0)
+        self.entry = ttk.Entry(self)
+        self.entry.grid(row=2, column=1, sticky='W')
+
+        # back and submit buttons
+        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
+        button.grid(row=3, column=0)
+
+        button1 = ttk.Button(self, text="Submit", command=self.processText)
+        button1.grid(row=3, column=2)
+
+
+    def processText(self, *event):
+        s = self.text.get("1.0", tk.END)
+        # remove last char from var
+        s = s[:-1]
+        s = parse(s)
+        self.controller.var = s
+        self.controller.saveName = self.entry.get()
+        self.controller.show_frame(predictPage2)
+
+
+class predictPage2(tk.Frame):
+    def __init__(self, parent, controller):
+        # need to reference controller in function
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        self.label = ttk.Label(self, text="Creating Prediction File. . .")
+        self.label.grid(row=0, column=0, padx=100, pady=20)
+
+        button = ttk.Button(self, text="<<Back", command=self.resetBack)
+        button.grid(row=1, column=0)
+        # when page is displayed create file
+        self.bind("<<onDisplay>>", self.createFile)
+
+    def createFile(self, event):
+        file = self.controller.var
+        saveName = self.controller.saveName
+        self.controller.var = None
+        self.controller.saveName = None
+        # check for correct extension
+        if saveName[-3:] != '.h5':
+            self.label.configure(text='Model name must end with .h5')
+        else:
+            try:
+                # return command output as byte string
+                args = ["pepeiao", "predict"]
+                for item in file:
+                    args.append(item)
+                args.append(saveName)
+                temp = check_output(args)
+                self.label.configure(text=temp)
+            except CalledProcessError:
+                # handle non zero exit status
+                self.label.configure(text="Invalid argument received")
+
+    def resetBack(self):
+        # change label to initial state and go to page
+        self.label.configure(text="Creating Prediction File. . .")
+        self.controller.show_frame(homePage)
+
+
 app = GraphicalUserInterface()
 app.title('Pepeiao Neural Network')
 app.mainloop()
-#file = "C:/Users/Russ Masuda/PycharmProjects/birdNN/data/S4A01450_20170507_180200.wav"
+#data\S4A01450_20170507_180200.wav data\S4A01450_20170507_190200.wav
