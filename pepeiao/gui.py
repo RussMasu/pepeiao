@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from subprocess import check_output, CalledProcessError
 from os import getcwd, path
 
@@ -8,24 +8,19 @@ def parse(string):
     """Given a string adds current dir to string"""
     newstring = []
     word = []
-    for i in range(0, len(string)+1):
-        if i == len(string):
+    record = False
+    for i in range(0, len(string)):
+        if string[i] == '{':
+            record = True
+        elif string[i] == '}':
             # join char array to form string
             temp = ""
             temp = temp.join(word)
             word.clear()
             # write string to newstring arr
-            #newstring.append(path.dirname(getcwd()) + "/" + temp)
-            newstring.append(getcwd()+"/"+temp)
-        elif string[i] is ' ':
-            # join char array to form string
-            temp = ""
-            temp = temp.join(word)
-            word.clear()
-            # write string to newstring arr
-            #newstring.append(path.dirname(getcwd()) + "/" + temp)
-            newstring.append(getcwd()+"/"+temp)
-        else:
+            newstring.append(temp)
+            record = False
+        elif record is True:
             word.append(string[i])
 
     return newstring
@@ -57,16 +52,17 @@ class GraphicalUserInterface(tk.Tk):
 
     def show_frame(self, page):
         """
-         # remove all frames from grid
+        # remove all frames from grid
         for frame in self.frames:
             self.frames.get(frame).grid_remove()
         # display page to grid
         p = self.frames.get(page)
         p.grid()
-        """
+        #"""
         # allow grid to finishing loading before generating event
         p = self.frames.get(page)
         p.tkraise()
+        #"""
         p.update()
         p.event_generate("<<onDisplay>>")
 
@@ -119,14 +115,18 @@ class featurePage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.text = tk.Text(self)
-        self.text.bind("<Return>", self.processText)
+        self.text.see(tk.END)
+        # self.text.bind("<Return>", self.processText)
         self.text.grid(row=1, column=0)
 
-        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
+        button = ttk.Button(self, text="Open Files", command=self.openDialogbox)
         button.grid(row=2, column=0)
 
-        button1 = ttk.Button(self, text="Submit", command=self.processText)
-        button1.grid(row=2, column=1)
+        button1 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
+        button1.grid(row=3, column=0, sticky="W")
+
+        button2 = ttk.Button(self, text="Submit", command=self.processText)
+        button2.grid(row=3, column=1)
 
 
     def processText(self, *event):
@@ -134,9 +134,13 @@ class featurePage(tk.Frame):
         # remove last char from var
         s = s[:-1]
         s = parse(s)
-        # print(s)
         self.controller.var = s
         self.controller.show_frame(featurePage2)
+
+    def openDialogbox(self):
+        filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select training .wav files",
+                                                  filetypes=[("wav files", "*.wav")])
+        self.text.insert(tk.END, filename)
 
 
 class featurePage2(tk.Frame):
@@ -161,6 +165,7 @@ class featurePage2(tk.Frame):
             args = ["pepeiao", "feature"]
             for item in file:
                 args.append(item)
+            print(args)
             temp = check_output(args)
             self.label.configure(text=temp)
         except CalledProcessError:
@@ -174,7 +179,6 @@ class featurePage2(tk.Frame):
 
     #TODO make window output scrollable, write to output as created, update message when finished
     #TODO write predictions to csv file
-    #TODO add tkFileDialog module
     #TODO fix error where only part of window is shown
     #TODO surpress not responding message on executing command
     #TODO write WINDOWS starting code
@@ -190,30 +194,32 @@ class trainPage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
         self.text = tk.Text(self)
         self.text.grid(row=0, column=1)
+        button = ttk.Button(self, text="Open Files", command=self.openDialogbox)
+        button.grid(row=1, column=1)
 
         # label and drop down menu holding model choices
         self.label1 = ttk.Label(self, text="Select model")
-        self.label1.grid(row=1, column=0, sticky='E')
+        self.label1.grid(row=2, column=0, sticky='E')
 
         choices = {'bulbul', 'conv', 'gru', 'transfer'}
         self.option = tk.StringVar(self)
         self.option.set('bulbul')
         menu = tk.OptionMenu(self, self.option, *choices)
-        menu.grid(row=1, column=1, sticky='W')
+        menu.grid(row=2, column=1, sticky='W')
 
         # label and entry box to enter saved name
         self.label2 = ttk.Label(self, text="Save as:")
-        self.label2.grid(row=2, column=0)
+        self.label2.grid(row=3, column=0)
         self.entry = ttk.Entry(self)
-        self.entry.grid(row=2, column=1, sticky='W')
+        self.entry.grid(row=3, column=1, sticky='W')
+
 
         # back and submit buttons
-        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
-        button.grid(row=3, column=0)
+        button1 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
+        button1.grid(row=4, column=0)
 
-        button1 = ttk.Button(self, text="Submit", command=self.processText)
-        button1.grid(row=3, column=2)
-
+        button2 = ttk.Button(self, text="Submit", command=self.processText)
+        button2.grid(row=4, column=2)
 
     def processText(self, *event):
         s = self.text.get("1.0", tk.END)
@@ -224,6 +230,11 @@ class trainPage(tk.Frame):
         self.controller.model = self.option.get()
         self.controller.saveName = self.entry.get()
         self.controller.show_frame(trainPage2)
+
+    def openDialogbox(self):
+        filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select feat files",
+                                                  filetypes=[("feat files", "*.feat")])
+        self.text.insert(tk.END, filename)
 
 
 class trainPage2(tk.Frame):
@@ -277,20 +288,21 @@ class predictPage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
         self.text = tk.Text(self)
         self.text.grid(row=0, column=1)
+        button = ttk.Button(self, text="Open Files", command=self.openDialogbox)
+        button.grid(row=1, column=1)
 
         # label and entry box to enter saved name
         self.label2 = ttk.Label(self, text="Load model:")
-        self.label2.grid(row=1, column=0)
+        self.label2.grid(row=2, column=0)
         self.entry = ttk.Entry(self)
-        self.entry.grid(row=1, column=1, sticky='W')
+        self.entry.grid(row=2, column=1, sticky='W')
 
         # back and submit buttons
         button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
-        button.grid(row=2, column=0)
+        button.grid(row=3, column=0)
 
         button1 = ttk.Button(self, text="Submit", command=self.processText)
-        button1.grid(row=2, column=2)
-
+        button1.grid(row=3, column=2)
 
     def processText(self, *event):
         s = self.text.get("1.0", tk.END)
@@ -300,6 +312,11 @@ class predictPage(tk.Frame):
         self.controller.var = s
         self.controller.saveName = self.entry.get()
         self.controller.show_frame(predictPage2)
+
+    def openDialogbox(self):
+        filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select testing .wav files",
+                                                  filetypes=[("wav files", "*.wav")])
+        self.text.insert(tk.END, filename)
 
 
 class predictPage2(tk.Frame):
