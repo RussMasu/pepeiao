@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
-from subprocess import check_output, CalledProcessError
+import subprocess
+import shlex
+import sys
 from os import getcwd, path
 
 
@@ -35,10 +37,11 @@ class GraphicalUserInterface(tk.Tk):
 
         # create container object
         container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
+        container.grid(row=0, column=0)
+        #container.pack(side="top", fill="both", expand=True)
 
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        #container.grid_rowconfigure(0, weight=1)
+        #container.grid_columnconfigure(0, weight=1)
 
         # frames dict to hold pages
         self.frames = {}
@@ -51,18 +54,18 @@ class GraphicalUserInterface(tk.Tk):
         self.show_frame(homePage)
 
     def show_frame(self, page):
-        """
+        #"""
         # remove all frames from grid
         for frame in self.frames:
             self.frames.get(frame).grid_remove()
         # display page to grid
         p = self.frames.get(page)
         p.grid()
-        #"""
+        """
         # allow grid to finishing loading before generating event
         p = self.frames.get(page)
         p.tkraise()
-        #"""
+        """
         p.update()
         p.event_generate("<<onDisplay>>")
 
@@ -148,8 +151,12 @@ class featurePage2(tk.Frame):
         # need to reference controller in function
         self.controller = controller
         tk.Frame.__init__(self, parent)
-        self.label = ttk.Label(self, text="Creating Feat Files. . .")
-        self.label.grid(row=0, column=0, padx=50, pady=20)
+
+        self.text = tk.Text(self)
+        self.text.insert(tk.END, "Creating Feat Files. . .")
+        self.text.config(state='disabled', background="light grey")
+        self.text.see(tk.END)
+        self.text.grid(row=0, column=0)
 
         button = ttk.Button(self, text="<<Back",
                             command=self.resetBack)
@@ -160,21 +167,38 @@ class featurePage2(tk.Frame):
     def createFile(self, event):
         file = self.controller.var
         self.controller.var = None
+        self.text.config(state='normal')
         try:
             # return command output as byte string
             args = ["pepeiao", "feature"]
             for item in file:
                 args.append(item)
-            print(args)
-            temp = check_output(args)
-            self.label.configure(text=temp)
-        except CalledProcessError:
+            #temp = check_output(args)
+
+            process = subprocess.Popen(args, stdout=subprocess.PIPE)
+            while True:
+                output = process.stdout.readline()
+                # break out of loop if exit code is returned
+                if process.poll() is not None:
+                    break
+                if output:
+                    self.text.insert(tk.END, output.strip())
+                    self.update()
+            self.text.insert(tk.END, "\n\nFinished writing files")
+
+            #self.text.insert(tk.END, temp)
+        except subprocess.CalledProcessError:
             # handle non zero exit status
-            self.label.configure(text="Invalid file name received")
+            self.text.delete('1.0', tk.END)
+            self.text.insert(tk.END, "Invalid file name received")
+        self.text.config(state='disabled')
 
     def resetBack(self):
         # change label to initial state and go to page
-        self.label.configure(text="Creating Feat Files. . .")
+        self.text.config(state='normal')
+        self.text.delete('1.0', tk.END)
+        self.text.insert(tk.END, "Creating Feat Files. . .")
+        self.text.config(state='disabled')
         self.controller.show_frame(featurePage)
 
     #TODO make window output scrollable, write to output as created, update message when finished
@@ -278,6 +302,7 @@ class trainPage2(tk.Frame):
         self.label.configure(text="Creating Model File. . .")
         self.controller.show_frame(trainPage)
 
+
 class predictPage(tk.Frame):
     def __init__(self, parent, controller):
         self.controller = controller
@@ -361,4 +386,4 @@ class predictPage2(tk.Frame):
 app = GraphicalUserInterface()
 app.title('Pepeiao Neural Network')
 app.mainloop()
-#data\S4A01450_20170507_180200.wav data\S4A01450_20170507_190200.wav
+# data\S4A01450_20170507_180200.wav data\S4A01450_20170507_190200.wav
