@@ -15,18 +15,19 @@ def parse(string):
             temp = temp.join(word)
             word.clear()
             # write string to newstring arr
-            newstring.append(path.dirname(getcwd()) + "/" + temp)
+            #newstring.append(path.dirname(getcwd()) + "/" + temp)
+            newstring.append(getcwd()+"/"+temp)
         elif string[i] is ' ':
             # join char array to form string
             temp = ""
             temp = temp.join(word)
             word.clear()
             # write string to newstring arr
-            newstring.append(path.dirname(getcwd()) + "/" + temp)
+            #newstring.append(path.dirname(getcwd()) + "/" + temp)
+            newstring.append(getcwd()+"/"+temp)
         else:
             word.append(string[i])
-    ans = ""
-    ans = ans.join(newstring)
+
     return newstring
 
 
@@ -55,13 +56,17 @@ class GraphicalUserInterface(tk.Tk):
         self.show_frame(homePage)
 
     def show_frame(self, page):
-        # remove all frames from grid
+        """
+         # remove all frames from grid
         for frame in self.frames:
             self.frames.get(frame).grid_remove()
         # display page to grid
         p = self.frames.get(page)
         p.grid()
+        """
         # allow grid to finishing loading before generating event
+        p = self.frames.get(page)
+        p.tkraise()
         p.update()
         p.event_generate("<<onDisplay>>")
 
@@ -79,7 +84,7 @@ class homePage(tk.Frame):
 
         button = ttk.Button(self, text="Create", command=lambda: controller.show_frame(inputPage))
         button.grid(row=1, column=1, sticky='E')
-        #TODO update link to predictPage
+
         button1 = ttk.Button(self, text="Predict", command=lambda: controller.show_frame(predictPage))
         button1.grid(row=1, column=2)
 
@@ -140,7 +145,7 @@ class featurePage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
         self.label = ttk.Label(self, text="Creating Feat Files. . .")
-        self.label.grid(row=0, column=0, padx=100, pady=20)
+        self.label.grid(row=0, column=0, padx=50, pady=20)
 
         button = ttk.Button(self, text="<<Back",
                             command=self.resetBack)
@@ -167,9 +172,12 @@ class featurePage2(tk.Frame):
         self.label.configure(text="Creating Feat Files. . .")
         self.controller.show_frame(featurePage)
 
-    #TODO work on prediction pages
+    #TODO make window output scrollable, write to output as created, update message when finished
+    #TODO write predictions to csv file
+    #TODO add tkFileDialog module
     #TODO fix error where only part of window is shown
     #TODO surpress not responding message on executing command
+    #TODO write WINDOWS starting code
 
 
 class trainPage(tk.Frame):
@@ -272,16 +280,16 @@ class predictPage(tk.Frame):
 
         # label and entry box to enter saved name
         self.label2 = ttk.Label(self, text="Load model:")
-        self.label2.grid(row=2, column=0)
+        self.label2.grid(row=1, column=0)
         self.entry = ttk.Entry(self)
-        self.entry.grid(row=2, column=1, sticky='W')
+        self.entry.grid(row=1, column=1, sticky='W')
 
         # back and submit buttons
         button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
-        button.grid(row=3, column=0)
+        button.grid(row=2, column=0)
 
         button1 = ttk.Button(self, text="Submit", command=self.processText)
-        button1.grid(row=3, column=2)
+        button1.grid(row=2, column=2)
 
 
     def processText(self, *event):
@@ -318,10 +326,9 @@ class predictPage2(tk.Frame):
         else:
             try:
                 # return command output as byte string
-                args = ["pepeiao", "predict"]
+                args = ["pepeiao", "predict", saveName]
                 for item in file:
                     args.append(item)
-                args.append(saveName)
                 temp = check_output(args)
                 self.label.configure(text=temp)
             except CalledProcessError:
@@ -331,7 +338,7 @@ class predictPage2(tk.Frame):
     def resetBack(self):
         # change label to initial state and go to page
         self.label.configure(text="Creating Prediction File. . .")
-        self.controller.show_frame(homePage)
+        self.controller.show_frame(predictPage)
 
 
 app = GraphicalUserInterface()
