@@ -4,26 +4,19 @@ import subprocess
 from os import getcwd
 
 
-def parse(string):
-    """Given a string adds current dir to string"""
-    newstring = []
-    word = []
-    record = False
-    for i in range(0, len(string)):
-        if string[i] == '{':
-            record = True
-        elif string[i] == '}':
-            # join char array to form string
-            temp = ""
-            temp = temp.join(word)
-            word.clear()
-            # write string to newstring arr
-            newstring.append(temp)
-            record = False
-        elif record is True:
-            word.append(string[i])
+def processDialog(self, filename):
+    for file in filename:
+        self.files.append(file)
+    self.text.config(state='normal')
+    self.text.insert(tk.END, filename)
+    self.text.config(state='disabled')
 
-    return newstring
+
+def clearDialog(self):
+    self.files.clear()
+    self.text.config(state='normal')
+    self.text.delete('1.0', tk.END)
+    self.text.config(state='disabled')
 
 
 def pepeiaoSubprocess(self, file, arg, model, savename):
@@ -165,33 +158,37 @@ class featurePage(tk.Frame):
         self.label = ttk.Label(self, text="Enter training .wav files")
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
-        self.text = tk.Text(self)
+        self.files = []
+        self.text = tk.Text(self, state='disabled')
         self.text.see(tk.END)
-        # self.text.bind("<Return>", self.processText)
         self.text.grid(row=1, column=0)
 
-        button = ttk.Button(self, text="Open Files", command=self.openDialogbox)
-        button.grid(row=2, column=0)
+        # create frame holding add and clear buttons
+        frame = tk.Frame(self)
+        frame.grid(row=2, column=0)
+        button = ttk.Button(frame, text="Add Files", command=self.openDialogbox)
+        button.grid(row=0, column=0)
+        button1 = ttk.Button(frame, text="Clear Files", command=self.clearDialogbox)
+        button1.grid(row=0, column=1)
 
-        button1 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
-        button1.grid(row=3, column=0, sticky="W")
+        button2 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
+        button2.grid(row=3, column=0, sticky="W")
 
-        button2 = ttk.Button(self, text="Submit", command=self.processText)
-        button2.grid(row=3, column=1)
+        button3 = ttk.Button(self, text="Submit", command=self.submitText)
+        button3.grid(row=3, column=1)
 
 
-    def processText(self, *event):
-        s = self.text.get("1.0", tk.END)
-        # remove last char from var
-        s = s[:-1]
-        s = parse(s)
-        self.controller.var = s
+    def submitText(self, *event):
+        self.controller.var = self.files
         self.controller.show_frame(featurePage2)
 
     def openDialogbox(self):
         filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select training .wav files",
                                                   filetypes=[("wav files", "*.wav")])
-        self.text.insert(tk.END, filename)
+        processDialog(self, filename)
+
+    def clearDialogbox(self):
+        clearDialog(self)
 
 
 class featurePage2(tk.Frame):
@@ -231,6 +228,7 @@ class featurePage2(tk.Frame):
 
     #TODO make window output scrollable
     #TODO write predictions to csv file
+    #TODO add load file dialog box to predict
     #TODO fix error where only part of window is shown
     #TODO surpress not responding message on executing command
     #TODO write WINDOWS starting code
@@ -244,41 +242,49 @@ class trainPage(tk.Frame):
         # label and text box to enter feat files
         self.label = ttk.Label(self, text="Enter .feat files")
         self.label.grid(row=0, column=0, padx=10, pady=10)
-        self.text = tk.Text(self)
+
+        self.files = []
+        self.text = tk.Text(self, state='disabled')
+        self.text.see(tk.END)
         self.text.grid(row=0, column=1)
-        button = ttk.Button(self, text="Open Files", command=self.openDialogbox)
-        button.grid(row=1, column=1)
+
+        # create frame holding add and clear buttons
+        frame = tk.Frame(self)
+        frame.grid(row=1, column=1)
+        button = ttk.Button(frame, text="Add Files", command=self.openDialogbox)
+        button.grid(row=0, column=0)
+        button1 = ttk.Button(frame, text="Clear Files", command=self.clearDialogbox)
+        button1.grid(row=0, column=1)
+
+        # empty space
+        blank = tk.Label(self)
+        blank.grid(row=2, column=0)
 
         # label and drop down menu holding model choices
         self.label1 = ttk.Label(self, text="Select model")
-        self.label1.grid(row=2, column=0, sticky='E')
+        self.label1.grid(row=3, column=0, sticky='E')
 
         choices = {'bulbul', 'conv', 'gru', 'transfer'}
         self.option = tk.StringVar(self)
         self.option.set('bulbul')
         menu = tk.OptionMenu(self, self.option, *choices)
-        menu.grid(row=2, column=1, sticky='W')
+        menu.grid(row=3, column=1, sticky='W')
 
         # label and entry box to enter saved name
         self.label2 = ttk.Label(self, text="Save as:")
-        self.label2.grid(row=3, column=0)
+        self.label2.grid(row=4, column=0)
         self.entry = ttk.Entry(self)
-        self.entry.grid(row=3, column=1, sticky='W')
-
+        self.entry.grid(row=4, column=1, sticky='W')
 
         # back and submit buttons
-        button1 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
-        button1.grid(row=4, column=0)
+        button2 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
+        button2.grid(row=5, column=0)
 
-        button2 = ttk.Button(self, text="Submit", command=self.processText)
-        button2.grid(row=4, column=2)
+        button3 = ttk.Button(self, text="Submit", command=self.submitText)
+        button3.grid(row=5, column=2)
 
-    def processText(self, *event):
-        s = self.text.get("1.0", tk.END)
-        # remove last char from var
-        s = s[:-1]
-        s = parse(s)
-        self.controller.var = s
+    def submitText(self, *event):
+        self.controller.var = self.files
         self.controller.model = self.option.get()
         self.controller.saveName = self.entry.get()
         self.controller.show_frame(trainPage2)
@@ -286,7 +292,10 @@ class trainPage(tk.Frame):
     def openDialogbox(self):
         filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select feat files",
                                                   filetypes=[("feat files", "*.feat")])
-        self.text.insert(tk.END, filename)
+        processDialog(self, filename)
+
+    def clearDialogbox(self):
+        clearDialog(self)
 
 
 class trainPage2(tk.Frame):
@@ -337,37 +346,49 @@ class predictPage(tk.Frame):
         # label and text box to enter feat files
         self.label = ttk.Label(self, text="Enter testing .wav files")
         self.label.grid(row=0, column=0, padx=10, pady=10)
-        self.text = tk.Text(self)
+
+        self.files = []
+        self.text = tk.Text(self, state='disabled')
+        self.text.see(tk.END)
         self.text.grid(row=0, column=1)
-        button = ttk.Button(self, text="Open Files", command=self.openDialogbox)
-        button.grid(row=1, column=1)
+
+        # create frame holding add and clear buttons
+        frame = tk.Frame(self)
+        frame.grid(row=1, column=1)
+        button = ttk.Button(frame, text="Add Files", command=self.openDialogbox)
+        button.grid(row=0, column=0)
+        button1 = ttk.Button(frame, text="Clear Files", command=self.clearDialogbox)
+        button1.grid(row=0, column=1)
+
+        # empty space
+        blank = tk.Label(self)
+        blank.grid(row=2, column=0)
 
         # label and entry box to enter saved name
         self.label2 = ttk.Label(self, text="Load model:")
-        self.label2.grid(row=2, column=0)
+        self.label2.grid(row=3, column=0)
         self.entry = ttk.Entry(self)
-        self.entry.grid(row=2, column=1, sticky='W')
+        self.entry.grid(row=3, column=1, sticky='W')
 
         # back and submit buttons
-        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
-        button.grid(row=3, column=0)
+        button2 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
+        button2.grid(row=4, column=0)
 
-        button1 = ttk.Button(self, text="Submit", command=self.processText)
-        button1.grid(row=3, column=2)
+        button3 = ttk.Button(self, text="Submit", command=self.submitText)
+        button3.grid(row=4, column=2)
 
-    def processText(self, *event):
-        s = self.text.get("1.0", tk.END)
-        # remove last char from var
-        s = s[:-1]
-        s = parse(s)
-        self.controller.var = s
+    def submitText(self, *event):
+        self.controller.var = self.files
         self.controller.saveName = self.entry.get()
         self.controller.show_frame(predictPage2)
 
     def openDialogbox(self):
         filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select testing .wav files",
                                                   filetypes=[("wav files", "*.wav")])
-        self.text.insert(tk.END, filename)
+        processDialog(self, filename)
+
+    def clearDialogbox(self):
+        clearDialog(self)
 
 
 class predictPage2(tk.Frame):
