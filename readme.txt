@@ -5,7 +5,7 @@ Create virtual environment, python3 -m venv env
 Activate virtual environment, source env/bin/activate
 If setuptools < 41.0.0 upgrade setuptools, pip install setuptools==41.0.0
 Install packages, pip install .
-Grant permissions such that pepeiao.sh is executable, chmod 554 pepeiao.sh
+Grant permissions such that pepeiao.sh is executable
 
 --Windows Installation Instructions--
 Create virtual environment, py -m venv env
