@@ -1,9 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 import subprocess
-import shlex
-import sys
-from os import getcwd, path
+from os import getcwd
 
 
 def parse(string):
@@ -26,6 +24,56 @@ def parse(string):
             word.append(string[i])
 
     return newstring
+
+
+def pepeiaoSubprocess(self, file, arg, model, savename):
+    # run pepeiao predict
+    if arg is "predict":
+        args = ["pepeiao", arg, savename]
+        for item in file:
+            args.append(item)
+    # run pepeiao train
+    elif arg is "train":
+        args = ["pepeiao", arg, savename]
+        for item in file:
+            args.append(item)
+        args.append(savename)
+    # default case
+    else:
+        args = ["pepeiao", arg]
+        for item in file:
+            args.append(item)
+
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    while True:
+        output = process.stdout.readline()
+        # break out of loop if exit code is returned
+        if process.poll() is not None:
+            rc = process.poll()
+            break
+        if output:
+            self.text.insert(tk.END, output.strip())
+            self.update()
+    # if subprocess succeeds
+    if rc is 0:
+        self.text.insert(tk.END, "\n\nFinished writing files")
+        # enable link to next screen
+        self.button1.config(state='normal')
+    # else
+    else:
+        self.text.delete('1.0', tk.END)
+        self.text.insert(tk.END, "Invalid file name received")
+
+    self.text.config(state='disabled')
+
+
+def resetPage(self, string, page):
+    self.text.config(state='normal')
+    self.text.delete('1.0', tk.END)
+    self.text.insert(tk.END, "Creating " + string + " Files. . .")
+    self.text.config(state='disabled')
+    self.controller.show_frame(page)
 
 
 class GraphicalUserInterface(tk.Tk):
@@ -158,50 +206,30 @@ class featurePage2(tk.Frame):
         self.text.see(tk.END)
         self.text.grid(row=0, column=0)
 
-        button = ttk.Button(self, text="<<Back",
-                            command=self.resetBack)
+        button = ttk.Button(self, text="<<Back", command=self.resBack)
         button.grid(row=1, column=0)
+
+        self.button1 = ttk.Button(self, text="Next>>", command=self.resForward)
+        self.button1.config(state='disabled')
+        self.button1.grid(row=1, column=1)
+
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
 
     def createFile(self, event):
+        self.button1.config(state='disabled')
         file = self.controller.var
         self.controller.var = None
         self.text.config(state='normal')
-        try:
-            # return command output as byte string
-            args = ["pepeiao", "feature"]
-            for item in file:
-                args.append(item)
-            #temp = check_output(args)
+        pepeiaoSubprocess(self, file, "feature", None, None)
 
-            process = subprocess.Popen(args, stdout=subprocess.PIPE)
-            while True:
-                output = process.stdout.readline()
-                # break out of loop if exit code is returned
-                if process.poll() is not None:
-                    break
-                if output:
-                    self.text.insert(tk.END, output.strip())
-                    self.update()
-            self.text.insert(tk.END, "\n\nFinished writing files")
+    def resBack(self):
+        resetPage(self, "Feat", featurePage)
 
-            #self.text.insert(tk.END, temp)
-        except subprocess.CalledProcessError:
-            # handle non zero exit status
-            self.text.delete('1.0', tk.END)
-            self.text.insert(tk.END, "Invalid file name received")
-        self.text.config(state='disabled')
+    def resForward(self):
+        resetPage(self, "Feat", trainPage)
 
-    def resetBack(self):
-        # change label to initial state and go to page
-        self.text.config(state='normal')
-        self.text.delete('1.0', tk.END)
-        self.text.insert(tk.END, "Creating Feat Files. . .")
-        self.text.config(state='disabled')
-        self.controller.show_frame(featurePage)
-
-    #TODO make window output scrollable, write to output as created, update message when finished
+    #TODO make window output scrollable
     #TODO write predictions to csv file
     #TODO fix error where only part of window is shown
     #TODO surpress not responding message on executing command
@@ -266,41 +294,39 @@ class trainPage2(tk.Frame):
         # need to reference controller in function
         self.controller = controller
         tk.Frame.__init__(self, parent)
-        self.label = ttk.Label(self, text="Creating Model File. . .")
-        self.label.grid(row=0, column=0, padx=100, pady=20)
 
-        button = ttk.Button(self, text="<<Back", command=self.resetBack)
+        self.text = tk.Text(self)
+        self.text.insert(tk.END, "Creating Model File. . .")
+        self.text.config(state='disabled', background="light grey")
+        self.text.see(tk.END)
+        self.text.grid(row=0, column=0)
+
+        button = ttk.Button(self, text="<<Back", command=self.resBack)
         button.grid(row=1, column=0)
+
+        self.button1 = ttk.Button(self, text="Next>>", command=self.resForward)
+        self.button1.config(state='disabled')
+        self.button1.grid(row=1, column=1)
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
 
     def createFile(self, event):
+        self.button1.config(state='disabled')
         file = self.controller.var
         model = self.controller.model
         saveName = self.controller.saveName
         self.controller.var = None
         self.controller.model = None
         self.controller.saveName = None
-        # check for correct extension
-        if saveName[-3:] != '.h5':
-            self.label.configure(text='saved name must end with .h5')
-        else:
-            try:
-                # return command output as byte string
-                args = ["pepeiao", "train", model]
-                for item in file:
-                    args.append(item)
-                args.append(saveName)
-                temp = check_output(args)
-                self.label.configure(text=temp)
-            except CalledProcessError:
-                # handle non zero exit status
-                self.label.configure(text="Invalid argument received")
 
-    def resetBack(self):
-        # change label to initial state and go to page
-        self.label.configure(text="Creating Model File. . .")
-        self.controller.show_frame(trainPage)
+        self.text.config(state='normal')
+        pepeiaoSubprocess(self, file, "train", model, saveName)
+
+    def resBack(self):
+        resetPage(self, "Model", trainPage)
+
+    def resForward(self):
+        resetPage(self, "Model", homePage)
 
 
 class predictPage(tk.Frame):
@@ -349,38 +375,38 @@ class predictPage2(tk.Frame):
         # need to reference controller in function
         self.controller = controller
         tk.Frame.__init__(self, parent)
-        self.label = ttk.Label(self, text="Creating Prediction File. . .")
-        self.label.grid(row=0, column=0, padx=100, pady=20)
 
-        button = ttk.Button(self, text="<<Back", command=self.resetBack)
+        self.text = tk.Text(self)
+        self.text.insert(tk.END, "Creating Prediction Files. . .")
+        self.text.config(state='disabled', background="light grey")
+        self.text.see(tk.END)
+        self.text.grid(row=0, column=0)
+
+        button = ttk.Button(self, text="<<Back", command=self.resBack)
         button.grid(row=1, column=0)
+
+        self.button1 = ttk.Button(self, text="Next>>", command=self.resForward)
+        self.button1.config(state='disabled')
+        self.button1.grid(row=1, column=1)
+
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
 
     def createFile(self, event):
+        self.button1.config(state='disabled')
         file = self.controller.var
         saveName = self.controller.saveName
         self.controller.var = None
         self.controller.saveName = None
-        # check for correct extension
-        if saveName[-3:] != '.h5':
-            self.label.configure(text='Model name must end with .h5')
-        else:
-            try:
-                # return command output as byte string
-                args = ["pepeiao", "predict", saveName]
-                for item in file:
-                    args.append(item)
-                temp = check_output(args)
-                self.label.configure(text=temp)
-            except CalledProcessError:
-                # handle non zero exit status
-                self.label.configure(text="Invalid argument received")
 
-    def resetBack(self):
-        # change label to initial state and go to page
-        self.label.configure(text="Creating Prediction File. . .")
-        self.controller.show_frame(predictPage)
+        self.text.config(state='normal')
+        pepeiaoSubprocess(self, file, "predict", None, saveName)
+
+    def resBack(self):
+        resetPage(self, "Prediction", predictPage)
+
+    def resForward(self):
+        resetPage(self, "Prediction", homePage)
 
 
 app = GraphicalUserInterface()
