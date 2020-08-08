@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, scrolledtext
 import subprocess
 from os import getcwd
+import re
 
 
 def processDialog(self, filename):
@@ -20,23 +21,22 @@ def clearDialog(self):
 
 
 def pepeiaoSubprocess(self, file, arg, model, savename):
-    # run pepeiao predict
+    # generate args
     if arg is "predict":
         args = ["pepeiao", arg, savename]
         for item in file:
             args.append(item)
-    # run pepeiao train
+        print(args)
     elif arg is "train":
-        args = ["pepeiao", arg, savename]
+        args = ["pepeiao", arg, model]
         for item in file:
             args.append(item)
         args.append(savename)
-    # default case
     else:
         args = ["pepeiao", arg]
         for item in file:
             args.append(item)
-
+    # run subprocess
     process = subprocess.Popen(args, stdout=subprocess.PIPE)
 
     while True:
@@ -46,14 +46,17 @@ def pepeiaoSubprocess(self, file, arg, model, savename):
             rc = process.poll()
             break
         if output:
-            self.text.insert(tk.END, output.strip())
+            samp  = str(output.strip())
+            temp = re.match(".+?(?=\\\\x08)",samp)
+            if temp is not None:
+                self.text.insert(tk.END, temp[0])
+            self.text.see("end")
             self.update()
     # if subprocess succeeds
     if rc is 0:
         self.text.insert(tk.END, "\n\nFinished writing files")
         # enable link to next screen
         self.button1.config(state='normal')
-    # else
     else:
         self.text.delete('1.0', tk.END)
         self.text.insert(tk.END, "Invalid file name received")
@@ -159,7 +162,7 @@ class featurePage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.files = []
-        self.text = tk.Text(self, state='disabled')
+        self.text = tk.scrolledtext.ScrolledText(self, state='disabled')
         self.text.see(tk.END)
         self.text.grid(row=1, column=0)
 
@@ -197,7 +200,7 @@ class featurePage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.Text(self)
+        self.text = tk.scrolledtext.ScrolledText(self)
         self.text.insert(tk.END, "Creating Feat Files. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
@@ -244,7 +247,7 @@ class trainPage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.files = []
-        self.text = tk.Text(self, state='disabled')
+        self.text = tk.scrolledtext.ScrolledText(self, state='disabled')
         self.text.see(tk.END)
         self.text.grid(row=0, column=1)
 
@@ -304,7 +307,7 @@ class trainPage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.Text(self)
+        self.text = tk.scrolledtext.ScrolledText(self)
         self.text.insert(tk.END, "Creating Model File. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
@@ -348,7 +351,7 @@ class predictPage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.files = []
-        self.text = tk.Text(self, state='disabled')
+        self.text = tk.scrolledtext.ScrolledText(self, state='disabled')
         self.text.see(tk.END)
         self.text.grid(row=0, column=1)
 
@@ -367,8 +370,15 @@ class predictPage(tk.Frame):
         # label and entry box to enter saved name
         self.label2 = ttk.Label(self, text="Load model:")
         self.label2.grid(row=3, column=0)
-        self.entry = ttk.Entry(self)
-        self.entry.grid(row=3, column=1, sticky='W')
+
+        # create frame holding add and clear buttons
+        frame = tk.Frame(self)
+        frame.grid(row=3, column=1, sticky='W')
+        button = ttk.Button(frame, text="Select Model", command=self.addModel)
+        button.grid(row=0, column=0, sticky='W')
+        self.entry = ttk.Entry(frame, state='disabled', width=80)
+        #self.entry = ttk.Entry(frame, width=80)
+        self.entry.grid(row=0, column=1)
 
         # back and submit buttons
         button2 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
@@ -390,6 +400,15 @@ class predictPage(tk.Frame):
     def clearDialogbox(self):
         clearDialog(self)
 
+    def addModel(self):
+        self.entry.config(state='normal')
+        if not self.entry.get():  # if entry is empty
+            self.entry.delete(0, tk.END)
+        filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select model file",
+                                                  filetypes=[("h5 files", "*.h5")])
+        self.entry.insert(tk.END, filename[0])
+        self.entry.config(state='disabled')
+
 
 class predictPage2(tk.Frame):
     def __init__(self, parent, controller):
@@ -397,7 +416,7 @@ class predictPage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.Text(self)
+        self.text = tk.scrolledtext.ScrolledText(self)
         self.text.insert(tk.END, "Creating Prediction Files. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
