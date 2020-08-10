@@ -15,6 +15,7 @@ setup(
         'PyWavelets',
         'sounddevice',
         'numba==0.48.0',
+        'numpy==1.18.0',
         'scipy==1.4.1',
         'tensorflow',
         ],
