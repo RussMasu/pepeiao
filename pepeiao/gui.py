@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, scrolledtext
+import tkinter.font as font
 import subprocess
 from os import getcwd
 import re
@@ -82,10 +83,6 @@ class GraphicalUserInterface(tk.Tk):
         # create container object
         container = tk.Frame(self)
         container.grid(row=0, column=0)
-        #container.pack(side="top", fill="both", expand=True)
-
-        #container.grid_rowconfigure(0, weight=1)
-        #container.grid_columnconfigure(0, weight=1)
 
         # frames dict to hold pages
         self.frames = {}
@@ -98,18 +95,8 @@ class GraphicalUserInterface(tk.Tk):
         self.show_frame(homePage)
 
     def show_frame(self, page):
-        #"""
-        # remove all frames from grid
-        for frame in self.frames:
-            self.frames.get(frame).grid_remove()
-        # display page to grid
-        p = self.frames.get(page)
-        p.grid()
-        """
-        # allow grid to finishing loading before generating event
         p = self.frames.get(page)
         p.tkraise()
-        """
         p.update()
         p.event_generate("<<onDisplay>>")
 
@@ -118,18 +105,20 @@ class homePage(tk.Frame):
     def __init__(self, parent, controller):
         self.controller = controller
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Make predictions from model file or Create a model file?")
-        label.grid(row=0, column=0, padx=10, pady=10)
+        label = tk.Label(self, text="Create a neural network or make predictions from neural network?",
+                         font=font.Font(size=12))
+        label.pack(pady=100)
 
         # buttons with quit, create, and predict options
+
         button = ttk.Button(self, text="Quit", command=self.closeWindow)
-        button.grid(row=1, column=0, sticky='W')
-
-        button = ttk.Button(self, text="Create", command=lambda: controller.show_frame(inputPage))
-        button.grid(row=1, column=1, sticky='E')
-
-        button1 = ttk.Button(self, text="Predict", command=lambda: controller.show_frame(predictPage))
-        button1.grid(row=1, column=2)
+        button.pack(side='left')
+        frame = tk.Frame(self)
+        frame.pack(side='right')
+        button = ttk.Button(frame, text="Create", command=lambda: controller.show_frame(inputPage))
+        button.grid(row=0, column=0)
+        button1 = ttk.Button(frame, text="Predict", command=lambda: controller.show_frame(predictPage))
+        button1.grid(row=0, column=1)
 
     def closeWindow(self):
         self.controller.destroy()
@@ -137,20 +126,21 @@ class homePage(tk.Frame):
 
 class inputPage(tk.Frame):
     def __init__(self, parent, controller):
+        self.controller = controller
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text=".feat files are required to train the neural network.\n"
-                                    "  Do you wish to load existing .feat "
-                                    "files or create new .feat files from .wav files?")
-        label.grid(row=0, column=0, padx=10, pady=10)
+        label = tk.Label(self, text="Pretrained feat files are required to train the nerual network. \n"
+                                    "Create feat files or load feat files to train network?", font=font.Font(size=12))
+        label.pack(pady=100)
 
-        button1 = tk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
-        button1.grid(row=1, column=0, sticky='W')
-
-        button = tk.Button(self, text="Create", command=lambda: controller.show_frame(featurePage))
-        button.grid(row=1, column=1, sticky='E')
-
-        button1 = tk.Button(self, text="Load", command=lambda: controller.show_frame(trainPage))
-        button1.grid(row=1, column=2)
+        # buttons with quit, create, and predict options
+        button = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(homePage))
+        button.pack(side='left')
+        frame = tk.Frame(self)
+        frame.pack(side='right')
+        button = ttk.Button(frame, text="Create", command=lambda: controller.show_frame(featurePage))
+        button.grid(row=0, column=0)
+        button1 = ttk.Button(frame, text="Load", command=lambda: controller.show_frame(trainPage))
+        button1.grid(row=0, column=1)
 
 
 class featurePage(tk.Frame):
@@ -159,26 +149,25 @@ class featurePage(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
         self.label = ttk.Label(self, text="Enter training .wav files")
-        self.label.grid(row=0, column=0, padx=10, pady=10)
+        self.label.pack()
 
         self.files = []
-        self.text = tk.scrolledtext.ScrolledText(self, state='disabled')
+        self.text = tk.scrolledtext.ScrolledText(self, state='disabled', width=60, height=10)
         self.text.see(tk.END)
-        self.text.grid(row=1, column=0)
+        self.text.pack()
 
         # create frame holding add and clear buttons
         frame = tk.Frame(self)
-        frame.grid(row=2, column=0)
+        frame.pack()
         button = ttk.Button(frame, text="Add Files", command=self.openDialogbox)
         button.grid(row=0, column=0)
         button1 = ttk.Button(frame, text="Clear Files", command=self.clearDialogbox)
         button1.grid(row=0, column=1)
 
         button2 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
-        button2.grid(row=3, column=0, sticky="W")
-
+        button2.pack(side='left')
         button3 = ttk.Button(self, text="Submit", command=self.submitText)
-        button3.grid(row=3, column=1)
+        button3.pack(side='right')
 
 
     def submitText(self, *event):
@@ -200,7 +189,7 @@ class featurePage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.scrolledtext.ScrolledText(self)
+        self.text = tk.scrolledtext.ScrolledText(self, width=60, height=10)
         self.text.insert(tk.END, "Creating Feat Files. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
@@ -229,10 +218,8 @@ class featurePage2(tk.Frame):
     def resForward(self):
         resetPage(self, "Feat", trainPage)
 
-    #TODO make window output scrollable
     #TODO write predictions to csv file
-    #TODO add load file dialog box to predict
-    #TODO fix error where only part of window is shown
+    #TODO output message to feature and predict screen
     #TODO surpress not responding message on executing command
     #TODO write WINDOWS starting code
 
@@ -242,49 +229,53 @@ class trainPage(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        # label and text box to enter feat files
-        self.label = ttk.Label(self, text="Enter .feat files")
-        self.label.grid(row=0, column=0, padx=10, pady=10)
-
         self.files = []
-        self.text = tk.scrolledtext.ScrolledText(self, state='disabled')
+        # label and text box to enter feat files
+        frame = tk.Frame(self)
+        frame.pack()
+        self.label = ttk.Label(frame, text="Enter .feat files")
+        self.label.grid(row=0, column=0, padx=10, pady=10)
+        self.text = tk.scrolledtext.ScrolledText(frame, state='disabled', width=60, height=10)
         self.text.see(tk.END)
         self.text.grid(row=0, column=1)
 
         # create frame holding add and clear buttons
-        frame = tk.Frame(self)
-        frame.grid(row=1, column=1)
-        button = ttk.Button(frame, text="Add Files", command=self.openDialogbox)
+        frame1 = tk.Frame(self)
+        frame1.pack()
+        button = ttk.Button(frame1, text="Add Files", command=self.openDialogbox)
         button.grid(row=0, column=0)
-        button1 = ttk.Button(frame, text="Clear Files", command=self.clearDialogbox)
+        button1 = ttk.Button(frame1, text="Clear Files", command=self.clearDialogbox)
         button1.grid(row=0, column=1)
 
         # empty space
         blank = tk.Label(self)
-        blank.grid(row=2, column=0)
+        blank.pack()
 
         # label and drop down menu holding model choices
-        self.label1 = ttk.Label(self, text="Select model")
-        self.label1.grid(row=3, column=0, sticky='E')
-
+        frame2 = tk.Frame(self)
+        frame2.pack()
+        self.label1 = ttk.Label(frame2, text="Select model")
+        self.label1.grid(row=0, column=0, sticky='E')
         choices = {'bulbul', 'conv', 'gru', 'transfer'}
         self.option = tk.StringVar(self)
         self.option.set('bulbul')
-        menu = tk.OptionMenu(self, self.option, *choices)
-        menu.grid(row=3, column=1, sticky='W')
+        menu = tk.OptionMenu(frame2, self.option, *choices)
+        menu.grid(row=0, column=1, sticky='W')
 
         # label and entry box to enter saved name
-        self.label2 = ttk.Label(self, text="Save as:")
-        self.label2.grid(row=4, column=0)
-        self.entry = ttk.Entry(self)
-        self.entry.grid(row=4, column=1, sticky='W')
+        frame3 = tk.Frame(self)
+        frame3.pack()
+        self.label2 = ttk.Label(frame3, text="Save as:")
+        self.label2.grid(row=0, column=0)
+        self.entry = ttk.Entry(frame3)
+        self.entry.grid(row=0, column=1, sticky='W')
 
         # back and submit buttons
         button2 = ttk.Button(self, text="<<Back", command=lambda: controller.show_frame(inputPage))
-        button2.grid(row=5, column=0)
+        button2.pack(side='left')
 
         button3 = ttk.Button(self, text="Submit", command=self.submitText)
-        button3.grid(row=5, column=2)
+        button3.pack(side='right')
 
     def submitText(self, *event):
         self.controller.var = self.files
@@ -307,7 +298,7 @@ class trainPage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.scrolledtext.ScrolledText(self)
+        self.text = tk.scrolledtext.ScrolledText(self, width=60, height=10)
         self.text.insert(tk.END, "Creating Model File. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
@@ -351,7 +342,7 @@ class predictPage(tk.Frame):
         self.label.grid(row=0, column=0, padx=10, pady=10)
 
         self.files = []
-        self.text = tk.scrolledtext.ScrolledText(self, state='disabled')
+        self.text = tk.scrolledtext.ScrolledText(self, state='disabled', width=60, height=10)
         self.text.see(tk.END)
         self.text.grid(row=0, column=1)
 
@@ -368,7 +359,7 @@ class predictPage(tk.Frame):
         blank.grid(row=2, column=0)
 
         # label and entry box to enter saved name
-        self.label2 = ttk.Label(self, text="Load model:")
+        self.label2 = ttk.Label(self, text="Load NN:")
         self.label2.grid(row=3, column=0)
 
         # create frame holding add and clear buttons
@@ -404,7 +395,7 @@ class predictPage(tk.Frame):
         self.entry.config(state='normal')
         if not self.entry.get():  # if entry is empty
             self.entry.delete(0, tk.END)
-        filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select model file",
+        filename = tk.filedialog.askopenfilenames(initialdir=getcwd(), title="Select Model",
                                                   filetypes=[("h5 files", "*.h5")])
         self.entry.insert(tk.END, filename[0])
         self.entry.config(state='disabled')
@@ -416,7 +407,7 @@ class predictPage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.scrolledtext.ScrolledText(self)
+        self.text = tk.scrolledtext.ScrolledText(self, width=60, height=10)
         self.text.insert(tk.END, "Creating Prediction Files. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
@@ -452,4 +443,3 @@ class predictPage2(tk.Frame):
 app = GraphicalUserInterface()
 app.title('Pepeiao Neural Network')
 app.mainloop()
-# data\S4A01450_20170507_180200.wav data\S4A01450_20170507_190200.wav
