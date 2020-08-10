@@ -10,7 +10,6 @@ setup(
         'h5py',
         'keras',
         'librosa',
-        'numpy',
         'pillow',
         'PyWavelets',
         'sounddevice',
