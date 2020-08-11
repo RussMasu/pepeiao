@@ -5,11 +5,9 @@ import subprocess
 from os import getcwd
 import re
 
-# TODO write predictions to csv file
 # TODO clean up output
 # TODO output stderr instead of "Error Occurred"
 # TODO convert program to run on multiple threads
-# TODO write WINDOWS starting code
 
 def processDialog(self, filename):
     for file in filename:
