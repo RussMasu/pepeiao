@@ -19,6 +19,8 @@ Create virtual environment, py -m venv env
 Activate virtual environment, .\env\Scripts\activate
 If setuptools < 41.0.0 upgrade setuptools, pip install setuptools==41.0.0
 Install packages, pip install .
+Grant read and execute permissions to run pepeiaowin.bat, pepeiao>properties>Security
 
 --Windows Operation Instructions--
 run pepeiaowin.bat to start program
+ 
