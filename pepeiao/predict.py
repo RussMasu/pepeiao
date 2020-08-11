@@ -17,15 +17,13 @@ import keras.layers
 
 _LOGGER = logging.getLogger(__name__)
 
-def predict(feature, model, channel, window_size, arr, out_stream=sys.stdout):
+
+def predict(feature, model, channel, window_size, arr):
     """Write predicted times to console and to pred list"""
     feature.predict(model, channel, window_size)
-    writer = csv.DictWriter(out_stream, fieldnames=[
-        _SELECTION_KEY, _BEGIN_KEY, _END_KEY, _FILE_KEY],
-    delimiter='\t')
-    writer.writeheader()
+    print("\n", _SELECTION_KEY, _BEGIN_KEY, _END_KEY, _FILE_KEY)
     for idx, (start, end) in enumerate(feature.time_intervals, start=1):
-        writer.writerow({_SELECTION_KEY: idx, _BEGIN_KEY: '{:.3f}'.format(start), _END_KEY: '{:.3f}'.format(end), _FILE_KEY: feature.file_name})
+        print(idx, '{:.3f}'.format(start), '{:.3f}'.format(end), feature.file_name)
         arr.append((idx, '{:.3f}'.format(start), '{:.3f}'.format(end), feature.file_name))
 
 def compare(selpath, filename, arr, epsilon):
@@ -61,11 +59,11 @@ def compare(selpath, filename, arr, epsilon):
     output.sort(key=lambda x: x[0])
     return output
 
-def compareToCSV(compareList, filename):
+def compareToCSV(compareList, filename, modelName):
     "writes compare list to CSV file"
     # generate name for .csv file
-    filepath = Path(filename)
-    csvpath = filepath.with_suffix('.csv')
+    filepath = re.search("[^/]+$", filename)
+    csvpath = filepath[0][:-4] + "_" + modelName + ".csv"
     # write data to csv file
     with open(csvpath, 'w', newline='') as csv_file:
         fileWriter = csv.writer(csv_file)
@@ -73,6 +71,8 @@ def compareToCSV(compareList, filename):
         fileWriter.writerow(header)
         for item in compareList:
             fileWriter.writerow(item)
+    return csvpath
+
 
 def main(args):
     predictList = []  # list holding predictions
@@ -90,9 +90,10 @@ def main(args):
     for filename in args.wav:
         feature = pepeiao.feature.Spectrogram(filename, args.selections)
         predict(feature, model, channel, window_length(), predictList)
+        # write results to csv file
+        print("Wrote files to " + compareToCSV(predictList, filename, model.name))
         if args.selections is not None:
-            # write results to csv file
-            compareToCSV(compare(args.selections, filename, predictList, 2), filename)
+            # compareToCSV(compare(args.selections, filename, predictList, 2), filename, model.name)
             _LOGGER.info('Writing roc table')
             with open(os.path.basename(filename) + '.roc', 'w') as rocfile:
                 print('true, pred', file=rocfile)

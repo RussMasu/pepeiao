@@ -5,6 +5,11 @@ import subprocess
 from os import getcwd
 import re
 
+# TODO write predictions to csv file
+# TODO clean up output
+# TODO output stderr instead of "Error Occurred"
+# TODO convert program to run on multiple threads
+# TODO write WINDOWS starting code
 
 def processDialog(self, filename):
     for file in filename:
@@ -37,32 +42,26 @@ def pepeiaoSubprocess(self, file, arg, model, savename):
         args = ["pepeiao", arg]
         for item in file:
             args.append(item)
+
     # run subprocess
     process = subprocess.Popen(args, stdout=subprocess.PIPE)
 
     while True:
         output = process.stdout.readline()
+        if output is not None:
+            self.text.insert(tk.END, output)
+            self.text.see("end")
+            self.update()
         # break out of loop if exit code is returned
         if process.poll() is not None:
             rc = process.poll()
             break
-        if output:
-            samp  = str(output.strip())
-            temp = re.match(".+?(?=\\\\x08)",samp)
-            if temp is not None:
-                self.text.insert(tk.END, temp[0])
-            self.text.see("end")
-            self.update()
     # if subprocess succeeds
     if rc is 0:
         self.text.insert(tk.END, "\n\nFinished writing files")
-        # enable link to next screen
         self.button1.config(state='normal')
     else:
-        self.text.delete('1.0', tk.END)
-        self.text.insert(tk.END, "Invalid file name received")
-
-    self.text.config(state='disabled')
+        self.text.insert(tk.END, "Error Occurred.")
 
 
 def resetPage(self, string, page):
@@ -106,7 +105,7 @@ class homePage(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Create a neural network or make predictions from neural network?",
-                         font=font.Font(size=12))
+                         font=font.Font(size=12, family='Helvetica'))
         label.pack(pady=100)
 
         # buttons with quit, create, and predict options
@@ -129,7 +128,8 @@ class inputPage(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Pretrained feat files are required to train the nerual network. \n"
-                                    "Create feat files or load feat files to train network?", font=font.Font(size=12))
+                                    "Create feat files or load feat files to train network?",
+                         font=font.Font(size=12, family='Helvetica'))
         label.pack(pady=100)
 
         # buttons with quit, create, and predict options
@@ -193,14 +193,14 @@ class featurePage2(tk.Frame):
         self.text.insert(tk.END, "Creating Feat Files. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
-        self.text.grid(row=0, column=0)
+        self.text.pack()
 
         button = ttk.Button(self, text="<<Back", command=self.resBack)
-        button.grid(row=1, column=0)
+        button.pack(side='left')
 
         self.button1 = ttk.Button(self, text="Next>>", command=self.resForward)
         self.button1.config(state='disabled')
-        self.button1.grid(row=1, column=1)
+        self.button1.pack(side='right')
 
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
@@ -211,17 +211,13 @@ class featurePage2(tk.Frame):
         self.controller.var = None
         self.text.config(state='normal')
         pepeiaoSubprocess(self, file, "feature", None, None)
+        self.text.config(state='disabled')
 
     def resBack(self):
         resetPage(self, "Feat", featurePage)
 
     def resForward(self):
         resetPage(self, "Feat", trainPage)
-
-    #TODO write predictions to csv file
-    #TODO output message to feature and predict screen
-    #TODO surpress not responding message on executing command
-    #TODO write WINDOWS starting code
 
 
 class trainPage(tk.Frame):
@@ -302,14 +298,14 @@ class trainPage2(tk.Frame):
         self.text.insert(tk.END, "Creating Model File. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
-        self.text.grid(row=0, column=0)
+        self.text.pack()
 
         button = ttk.Button(self, text="<<Back", command=self.resBack)
-        button.grid(row=1, column=0)
+        button.pack(side='left')
 
         self.button1 = ttk.Button(self, text="Next>>", command=self.resForward)
         self.button1.config(state='disabled')
-        self.button1.grid(row=1, column=1)
+        self.button1.pack(side='right')
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
 
@@ -324,6 +320,7 @@ class trainPage2(tk.Frame):
 
         self.text.config(state='normal')
         pepeiaoSubprocess(self, file, "train", model, saveName)
+        self.text.config(state='disabled')
 
     def resBack(self):
         resetPage(self, "Model", trainPage)
@@ -407,18 +404,18 @@ class predictPage2(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
 
-        self.text = tk.scrolledtext.ScrolledText(self, width=60, height=10)
+        self.text = tk.scrolledtext.ScrolledText(self, width=95, height=10)
         self.text.insert(tk.END, "Creating Prediction Files. . .")
         self.text.config(state='disabled', background="light grey")
         self.text.see(tk.END)
-        self.text.grid(row=0, column=0)
+        self.text.pack()
 
         button = ttk.Button(self, text="<<Back", command=self.resBack)
-        button.grid(row=1, column=0)
+        button.pack(side='left')
 
         self.button1 = ttk.Button(self, text="Next>>", command=self.resForward)
         self.button1.config(state='disabled')
-        self.button1.grid(row=1, column=1)
+        self.button1.pack(side='right')
 
         # when page is displayed create file
         self.bind("<<onDisplay>>", self.createFile)
@@ -432,6 +429,7 @@ class predictPage2(tk.Frame):
 
         self.text.config(state='normal')
         pepeiaoSubprocess(self, file, "predict", None, saveName)
+        self.text.config(state='disabled')
 
     def resBack(self):
         resetPage(self, "Prediction", predictPage)

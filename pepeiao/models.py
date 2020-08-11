@@ -8,7 +8,7 @@ def _prob_bird(y_true, y_pred):
 
 def conv_model(input_shape):
     """A basic convolutional model created by the 2018 Summer research project undergrads."""
-    model = models.Sequential()
+    model = models.Sequential(name="conv")
     model.add(layers.Input(input_shape))
     model.add(layers.Conv2D(32, (2, 2), activation='relu'))#
     model.add(layers.MaxPooling2D((2, 2)))
@@ -47,7 +47,7 @@ def bulbul(input_shape):
     http://machine-listening.eecs.qmul.ac.uk/bird-audio-detection-challenge/
     https://arxiv.org/abs/1807.05812
     """
-    model = models.Sequential()
+    model = models.Sequential(name="bulbul")
     model.add(layers.Input(input_shape))
     model.add(layers.Conv2D(32, (2, 2), activation='relu'))
     model.add(layers.LeakyReLU(alpha = 0.01))
